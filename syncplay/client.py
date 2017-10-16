@@ -16,6 +16,18 @@ from syncplay.messages import getMissingStrings, getMessage
 from syncplay.constants import PRIVACY_SENDHASHED_MODE, PRIVACY_DONTSEND_MODE, \
     PRIVACY_HIDDENFILENAME
 import collections
+
+import os
+import re
+import subprocess as sp
+from subprocess import *
+from optparse import OptionParser
+
+OP_LENGTH_RANGE = (59,110)
+ED_LENGTH_RANGE = (59,110)
+NEXT_EP_RANGE = (0,35)
+
+
 class SyncClientFactory(ClientFactory):
     def __init__(self, client, retry=constants.RECONNECT_RETRIES):
         self._client = client
@@ -58,6 +70,8 @@ class SyncClientFactory(ClientFactory):
         self._timesTried = self.retry
 
 class SyncplayClient(object):
+    chapterSkips = []
+    
     def __init__(self, playerClass, ui, config):
         constants.SHOW_OSD = config['showOSD']
         constants.SHOW_OSD_WARNINGS = config['showOSDWarnings']
@@ -215,6 +229,20 @@ class SyncplayClient(object):
                     self.playerPositionBeforeLastSeek = self.getGlobalPosition()
                 self._protocol.sendState(self.getPlayerPosition(), self.getPlayerPaused(), seeked, None, True)
 
+        # skip OP/ED
+        if self._protocol and self._playerPosition>1:
+            for i in range(len(self.chapterSkips)):
+                skip = self.chapterSkips[i]
+                if self._playerPosition<skip[1] and self._playerPosition>skip[0]:
+                    self.playerPositionBeforeLastSeek = self.getGlobalPosition()
+                    if skip[1] > currentLength-1:
+                        if self.playlist.notJustChangedPlaylist():
+                            self.playlist.loadNextFileInPlaylist()
+                    else:
+                        self.setPosition(skip[1])
+                    del self.chapterSkips[i]
+                    return
+                
     def prepareToAdvancePlaylist(self):
         if self.playlist.canSwitchToNextPlaylistIndex():
             self.ui.showDebugMessage("Preparing to advance playlist...")
@@ -506,7 +534,46 @@ class SyncplayClient(object):
             self.establishRewindDoubleCheck()
             self.lastRewindTime = time.time()
             self.autoplayCheck()
+        self.parseChapterSkips(filePath)
 
+    def parseChapterSkips(self, filePath):
+        filePath = self.fileSwitch.findFilepath(os.path.basename(filePath), highPriority=True)
+        self.chapterSkips = []
+        chapters = self.__getChapterData(filePath)
+        chapterLengths = [float(d['end'])-float(d['start']) for d in chapters]
+        if len(chapters)>2:
+            if int(chapterLengths[1]) in range(*OP_LENGTH_RANGE):
+                self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
+            elif int(chapterLengths[0]) in range(*OP_LENGTH_RANGE):
+                self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+            if int(chapterLengths[-1]) in range(*ED_LENGTH_RANGE):
+                self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+            elif int(chapterLengths[-2]) in range(*ED_LENGTH_RANGE):
+                if int(chapterLengths[-1]) in range(*NEXT_EP_RANGE):
+                    self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-1]['end'])))
+                else:
+                    self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
+        
+    def __getChapterData(self, filePath):
+        chapters = []
+        command = [ "ffmpeg", '-i', filePath]
+        output = ""
+        try:
+          # ffmpeg requires an output file and so it errors 
+          # when it does not get one so we need to capture stderr, 
+          # not stdout.
+            output = sp.check_output(command, stderr=sp.STDOUT, universal_newlines=True, shell=True)
+        except CalledProcessError, e:
+            output = e.output 
+
+        for line in iter(output.splitlines()):
+            m = re.match(r".*Chapter #(\d+:\d+): start (\d+\.\d+), end (\d+\.\d+).*", line)
+            num = 0 
+            if m != None:
+                chapters.append({ "name": m.group(1), "start": m.group(2), "end": m.group(3)})
+                num += 1
+        return chapters
+    
     def fileSwitchFoundFiles(self):
         self.ui.fileSwitchFoundFiles()
         self.playlist.loadCurrentPlaylistIndex()
@@ -1446,6 +1513,7 @@ class SyncplayPlaylist():
         try:
             filename = self._playlist[index]
             self._ui.setPlaylistIndexFilename(filename)
+            self._client.parseChapterSkips(filename)
             if not self._client.sharedPlaylistIsEnabled():
                 self._playlistIndex = index
             if username is not None and self._client.userlist.currentUser.file and filename == self._client.userlist.currentUser.file['name']:
