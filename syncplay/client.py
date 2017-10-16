@@ -17,11 +17,7 @@ from syncplay.constants import PRIVACY_SENDHASHED_MODE, PRIVACY_DONTSEND_MODE, \
     PRIVACY_HIDDENFILENAME
 import collections
 
-import os
-import re
 import subprocess as sp
-from subprocess import *
-from optparse import OptionParser
 
 OP_LENGTH_RANGE = (59,110)
 ED_LENGTH_RANGE = (59,110)
@@ -246,7 +242,7 @@ class SyncplayClient(object):
                     del self.chapterSkips[i]
                     break
         
-        # only perform this if auto-skip hasn't been done (this pervents rapid double-seeks which break the sync)
+        # only perform this if auto-skip hasn't been done (this prevents rapid double-seeks which break the sync)
         if self._lastGlobalUpdate and not autoSkip:
             self._lastPlayerUpdate = time.time()
             if (pauseChange or seeked) and self._protocol:
@@ -548,7 +544,6 @@ class SyncplayClient(object):
             self.establishRewindDoubleCheck()
             self.lastRewindTime = time.time()
             self.autoplayCheck()
-##        self.parseChapterSkips(filePath)
 
     def parseChapterSkips(self, filePath):
         filePath = self.fileSwitch.findFilepath(os.path.basename(filePath), highPriority=True)
@@ -577,8 +572,8 @@ class SyncplayClient(object):
           # when it does not get one so we need to capture stderr, 
           # not stdout.
             output = sp.check_output(command, stderr=sp.STDOUT, universal_newlines=True, shell=True)
-        except CalledProcessError, e:
-            output = e.output 
+        except sp.CalledProcessError, e:
+            output = e.output
 
         for line in iter(output.splitlines()):
             m = re.match(r".*Chapter #(\d+:\d+): start (\d+\.\d+), end (\d+\.\d+).*", line)
@@ -1526,7 +1521,7 @@ class SyncplayPlaylist():
             return
         try:
             if self._client.playerPositionBeforeLastSeek:
-                self._client.rewindFile() # this rewind is what makes playlist file switching smooth and intuitive.
+                self._client.rewindFile() # this rewind is what makes playlist file switching smooth and intuitive. ticket #138
             filename = self._playlist[index]
             self._ui.setPlaylistIndexFilename(filename)
             if not self._client.sharedPlaylistIsEnabled():
@@ -1544,7 +1539,6 @@ class SyncplayPlaylist():
         else:
             self._ui.showMessage(getMessage("playlist-selection-changed-notification").format(username))
             self.switchToNewPlaylistIndex(index)
-##        self._client.parseChapterSkips(filename)
 
     def canSwitchToNextPlaylistIndex(self):
         if self._thereIsNextPlaylistIndex() and self._client.sharedPlaylistIsEnabled():
