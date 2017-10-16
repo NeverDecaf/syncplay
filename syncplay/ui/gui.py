@@ -1633,7 +1633,7 @@ class MainWindow(QtGui.QMainWindow):
     @needsClient
     def changeSkipPreviewState(self, source=None):
         self.updateSkipPreviewIcon()
-        if self.skipPreviewPushButton.isEnabled()
+        if self.skipPreviewPushButton.isEnabled():
             if self._syncplayClient:
                 self._syncplayClient.changeSkipPreviewState(self.skipPreviewPushButton.isChecked())
             else:
