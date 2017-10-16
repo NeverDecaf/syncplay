@@ -123,6 +123,8 @@ class SyncplayClient(object):
         self._speedChanged = False
         self.behindFirstDetected = None
         self.autoPlay = False
+        self.skipOP = False
+        self.skipPreview = False
         self.autoPlayThreshold = None
 
         self.autoplayTimer = task.LoopingCall(self.autoplayCountdown)
@@ -551,17 +553,18 @@ class SyncplayClient(object):
         chapters = self.__getChapterData(filePath)
         chapterLengths = [float(d['end'])-float(d['start']) for d in chapters]
         if len(chapters)>2:
-            if int(chapterLengths[1]) in range(*OP_LENGTH_RANGE):
-                self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
-            elif int(chapterLengths[0]) in range(*OP_LENGTH_RANGE):
-                self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
-            if int(chapterLengths[-1]) in range(*ED_LENGTH_RANGE):
-                self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
-            elif int(chapterLengths[-2]) in range(*ED_LENGTH_RANGE):
-                if int(chapterLengths[-1]) in range(*NEXT_EP_RANGE):
-                    self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-1]['end'])))
-                else:
-                    self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
+            if self.skipOP:
+                if OP_LENGTH_RANGE[0] < chapterLengths[1] < OP_LENGTH_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
+                elif OP_LENGTH_RANGE[0] < chapterLengths[0] < OP_LENGTH_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                if ED_LENGTH_RANGE[0] < chapterLengths[-1] < ED_LENGTH_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+                elif ED_LENGTH_RANGE[0] < chapterLengths[-2] < ED_LENGTH_RANGE[1]:
+                    if self.skipPreview and NEXT_EP_RANGE[0] < chapterLengths[-1] < NEXT_EP_RANGE[1]:
+                        self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-1]['end'])))
+                    else:
+                        self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
         
     def __getChapterData(self, filePath):
         chapters = []
@@ -786,6 +789,16 @@ class SyncplayClient(object):
     def changeAutoplayState(self, newState):
         self.autoPlay = newState
         self.autoplayCheck()
+
+    def changeSkipOPState(self, newState):
+        self.skipOP = newState
+        if self.userlist.currentUser.file:
+            self.parseChapterSkips(self.userlist.currentUser.file['name'])
+
+    def changeSkipPreviewState(self, newState):
+        self.skipPreview = newState
+        if self.userlist.currentUser.file:
+            self.parseChapterSkips(self.userlist.currentUser.file['name'])
 
     def changeAutoPlayThrehsold(self, newThreshold):
         oldAutoplayConditionsMet = self.autoplayConditionsMet()

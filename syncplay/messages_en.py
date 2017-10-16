@@ -248,6 +248,9 @@ en = {
     "pause-menu-label" : "Pause",
     "playbackbuttons-menu-label" : u"Show playback buttons",
     "autoplay-menu-label" : u"Show auto-play button",
+    "skip-menu-label" : u"Show skip buttons",
+    "skip-guiopbuttonlabel" : u"Skip OP/ED",
+    "skip-guipreviewbuttonlabel" : u"Skip Preview",
     "autoplay-guipushbuttonlabel" : u"Play when all ready",
     "autoplay-minimum-label" : u"Min users:",
 
@@ -361,6 +364,8 @@ en = {
     "joinroom-tooltip" : "Leave current room and joins specified room.",
     "seektime-msgbox-label" : "Jump to specified time (in seconds / min:sec). Use +/- for relative seek.",
     "ready-tooltip" : "Indicates whether you are ready to watch.",
+    "skip-op-tooltip" : "Attempt to skip anime opening and endings.",
+    "skip-preview-tooltip" : "Attempt to skip anime next episode previews.",
     "autoplay-tooltip" : "Auto-play when all users who have readiness indicator are ready and minimum user threshold met.",
     "switch-to-file-tooltip" : u"Double click to switch to {}", # Filename
     "sendmessage-tooltip" : u"Send message to room",

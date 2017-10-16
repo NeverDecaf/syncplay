@@ -13,7 +13,10 @@ from functools import wraps
 from twisted.internet import task
 if sys.platform.startswith('darwin'):
     from Foundation import NSURL
+import subprocess as sp
+
 lastCheckedForUpdates = None
+
 
 class UserlistItemDelegate(QtGui.QStyledItemDelegate):
     def __init__(self):
@@ -380,6 +383,20 @@ class MainWindow(QtGui.QMainWindow):
             self.changeAutoplayState()
             self.changeAutoplayThreshold()
             self.updateAutoPlayIcon()
+            ffmpegSupport = False
+            devnull = open(os.devnull)
+            command = [ "ffmpeg" , '-version']
+            try:
+                sp.check_call(command, stdout=devnull, stderr=devnull, universal_newlines=True, shell=True)
+                ffmpegSupport = True
+            except sp.CalledProcessError as e:
+                pass
+##            print 'ffmpeg supported?',ffmpegSupport
+            if not ffmpegSupport:
+                self.disableSkipOPButton()
+                self.disableSkipPreviewButton()
+            self.changeSkipOPState()
+            self.changeSkipPreviewState()
         except:
             self.showErrorMessage("Failed to load some settings.")
         self.automaticUpdateCheck()
@@ -1226,6 +1243,7 @@ class MainWindow(QtGui.QMainWindow):
         window.bottomLayout.setContentsMargins(0,0,0,0)
 
         self.addPlaybackLayout(window)
+        self.addSkipLayout(window)
 
         window.playlistGroup = self.PlaylistGroupBox(getMessage("sharedplaylistenabled-label"))
         window.playlistGroup.setCheckable(True)
@@ -1341,7 +1359,67 @@ class MainWindow(QtGui.QMainWindow):
         window.playbackFrame.setMaximumHeight(window.playbackFrame.sizeHint().height())
         window.playbackFrame.setMaximumWidth(window.playbackFrame.sizeHint().width())
         window.outputLayout.addWidget(window.playbackFrame)
+        
+    def addSkipLayout(self, window):
+        window.skipFrame = QtGui.QFrame()
+        window.skipFrame.setVisible(False)
+        window.skipFrame.setContentsMargins(0,0,0,0)
+        window.skipLayout = QtGui.QHBoxLayout()
+        window.skipLayout.setAlignment(Qt.AlignLeft)
+        window.skipLayout.setContentsMargins(0,0,0,0)
+        window.skipFrame.setLayout(window.skipLayout)
 
+        window.skipOPPushButton = QtGui.QPushButton()
+        skipFont = QtGui.QFont()
+        skipFont.setWeight(QtGui.QFont.Bold)
+	window.skipOPPushButton.setText(getMessage("skip-guiopbuttonlabel"))
+        window.skipOPPushButton.setCheckable(True)
+        window.skipOPPushButton.setAutoExclusive(False)
+        window.skipOPPushButton.toggled.connect(self.changeSkipOPState)
+        window.skipOPPushButton.setFont(skipFont)
+        window.skipOPPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
+        window.skipOPPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipOPPushButton.setToolTip(getMessage("skip-op-tooltip"))
+        window.skipLayout.addWidget(window.skipOPPushButton)
+
+        window.skipPreviewPushButton = QtGui.QPushButton()
+	window.skipPreviewPushButton.setText(getMessage("skip-guipreviewbuttonlabel"))
+        window.skipPreviewPushButton.setCheckable(True)
+        window.skipPreviewPushButton.setAutoExclusive(False)
+        window.skipPreviewPushButton.toggled.connect(self.changeSkipPreviewState)
+        window.skipPreviewPushButton.setFont(skipFont)
+        window.skipPreviewPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
+        window.skipPreviewPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipPreviewPushButton.setToolTip(getMessage("skip-preview-tooltip"))
+        window.skipLayout.addWidget(window.skipPreviewPushButton)
+        
+##        window.seekInput = QtGui.QLineEdit()
+##        window.seekInput.returnPressed.connect(self.seekFromButton)
+##        window.seekButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'clock_go.png'), "")
+##        window.seekButton.setToolTip(getMessage("seektime-menu-label"))
+##        window.seekButton.pressed.connect(self.seekFromButton)
+##        window.seekInput.setText("0:00")
+##        window.seekInput.setFixedWidth(60)
+##        window.skipLayout.addWidget(window.seekInput)
+##        window.skipLayout.addWidget(window.seekButton)
+##        window.unseekButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'arrow_undo.png'), "")
+##        window.unseekButton.setToolTip(getMessage("undoseek-menu-label"))
+##        window.unseekButton.pressed.connect(self.undoSeek)
+##
+##        window.miscLayout = QtGui.QHBoxLayout()
+##        window.skipLayout.addWidget(window.unseekButton)
+##        window.playButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'control_play_blue.png'), "")
+##        window.playButton.setToolTip(getMessage("play-menu-label"))
+##        window.playButton.pressed.connect(self.play)
+##        window.skipLayout.addWidget(window.playButton)
+##        window.pauseButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + 'control_pause_blue.png'), "")
+##        window.pauseButton.setToolTip(getMessage("pause-menu-label"))
+##        window.pauseButton.pressed.connect(self.pause)
+##        window.skipLayout.addWidget(window.pauseButton)
+        window.skipFrame.setMaximumHeight(window.skipFrame.sizeHint().height())
+##        window.skipFrame.setMaximumWidth(window.skipFrame.sizeHint().width())
+        window.outputLayout.addWidget(window.skipFrame)
+        
     def addMenubar(self, window):
         window.menuBar = QtGui.QMenuBar()
 
@@ -1407,6 +1485,11 @@ class MainWindow(QtGui.QMainWindow):
         window.autoplayAction = window.windowMenu.addAction(getMessage("autoplay-menu-label"))
         window.autoplayAction.setCheckable(True)
         window.autoplayAction.triggered.connect(self.updateAutoplayVisibility)
+
+        window.skipAction = window.windowMenu.addAction(getMessage("skip-menu-label"))
+        window.skipAction.setCheckable(True)
+        window.skipAction.triggered.connect(self.updateSkipFrameVisibility)
+        
         window.menuBar.addMenu(window.windowMenu)
 
 
@@ -1461,7 +1544,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def updatePlaybackFrameVisibility(self):
         self.playbackFrame.setVisible(self.playbackAction.isChecked())
-
+        
+    def updateSkipFrameVisibility(self):
+        self.skipFrame.setVisible(self.skipAction.isChecked())
+        
     def updateAutoplayVisibility(self):
         self.autoplayFrame.setVisible(self.autoplayAction.isChecked())
 
@@ -1487,6 +1573,32 @@ class MainWindow(QtGui.QMainWindow):
             self.autoplayPushButton.blockSignals(False)
         self.updateAutoPlayIcon()
 
+    def disableSkipOPButton(self):
+        self.skipOPPushButton.blockSignals(True)
+        self.skipOPPushButton.setEnabled(False)
+        self.skipOPPushButton.blockSignals(False)
+        
+    def updateSkipOPState(self, newState):
+        oldState = self.skipOPPushButton.isChecked()
+        if newState != oldState and newState != None:
+            self.skipOPPushButton.blockSignals(True)
+            self.skipOPPushButton.setChecked(newState)
+            self.skipOPPushButton.blockSignals(False)
+        self.updateSkipOPIcon()
+
+    def disableSkipPreviewButton(self):
+        self.skipPreviewPushButton.blockSignals(True)
+        self.skipPreviewPushButton.setEnabled(False)
+        self.skipPreviewPushButton.blockSignals(False)
+        
+    def updateSkipPreviewState(self, newState):
+        oldState = self.skipPreviewPushButton.isChecked()
+        if newState != oldState and newState != None:
+            self.skipPreviewPushButton.blockSignals(True)
+            self.skipPreviewPushButton.setChecked(newState)
+            self.skipPreviewPushButton.blockSignals(False)
+        self.updateSkipPreviewIcon()
+        
     @needsClient
     def changeAutoplayState(self, source=None):
         self.updateAutoPlayIcon()
@@ -1508,7 +1620,39 @@ class MainWindow(QtGui.QMainWindow):
             self.autoplayPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'tick_checkbox.png'))
         else:
             self.autoplayPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'empty_checkbox.png'))
+            
+    @needsClient
+    def changeSkipOPState(self, source=None):
+        self.updateSkipOPIcon()
+        if self.skipOPPushButton.isEnabled():
+            if self._syncplayClient:
+                self._syncplayClient.changeSkipOPState(self.skipOPPushButton.isChecked())
+            else:
+                self.showDebugMessage("Tried to set SkipOP too soon")
+            
+    @needsClient
+    def changeSkipPreviewState(self, source=None):
+        self.updateSkipPreviewIcon()
+        if self.skipPreviewPushButton.isEnabled()
+            if self._syncplayClient:
+                self._syncplayClient.changeSkipPreviewState(self.skipPreviewPushButton.isChecked())
+            else:
+                self.showDebugMessage("Tried to set SkipPreview too soon")
+            
+    def updateSkipOPIcon(self):
+        ready = self.skipOPPushButton.isChecked()
+        if ready:
+            self.skipOPPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'tick_checkbox.png'))
+        else:
+            self.skipOPPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'empty_checkbox.png'))
 
+    def updateSkipPreviewIcon(self):
+        ready = self.skipPreviewPushButton.isChecked()
+        if ready:
+            self.skipPreviewPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'tick_checkbox.png'))
+        else:
+            self.skipPreviewPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'empty_checkbox.png'))
+            
     def automaticUpdateCheck(self):
         currentDateTime = datetime.utcnow()
         if not self.config['checkForUpdatesAutomatically']:
@@ -1656,6 +1800,9 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue("pos", self.pos())
         settings.setValue("showPlaybackButtons", self.playbackAction.isChecked())
         settings.setValue("showAutoPlayButton", self.autoplayAction.isChecked())
+        settings.setValue("showSkipButtons", self.skipAction.isChecked())
+        settings.setValue("skipOPChecked", self.skipOPPushButton.isChecked())
+        settings.setValue("skipPreviewChecked", self.skipPreviewPushButton.isChecked())
         settings.setValue("autoplayChecked", self.autoplayPushButton.isChecked())
         settings.setValue("autoplayMinUsers", self.autoplayThresholdSpinbox.value())
         settings.endGroup()
@@ -1682,6 +1829,15 @@ class MainWindow(QtGui.QMainWindow):
         if settings.value("autoplayChecked", "false") == "true":
             self.updateAutoPlayState(True)
             self.autoplayPushButton.setChecked(True)
+        if settings.value("showSkipButtons","false") == "true":
+            self.skipAction.setChecked(True)
+            self.updateSkipFrameVisibility()
+        if settings.value("skipOPChecked", "false") == "true":
+            self.updateSkipOPState(True)
+            self.skipOPPushButton.setChecked(True)
+        if settings.value("skipPreviewChecked", "false") == "true":
+            self.updateSkipPreviewState(True)
+            self.skipPreviewPushButton.setChecked(True)
         self.autoplayThresholdSpinbox.blockSignals(True)
         self.autoplayThresholdSpinbox.setValue(int(settings.value("autoplayMinUsers", 2)))
         self.autoplayThresholdSpinbox.blockSignals(False)

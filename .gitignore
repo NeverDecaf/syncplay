@@ -6,7 +6,7 @@ venv
 /SyncPlay.egg-info
 /build
 /dist
-/syncplay v*
+/syncplay_v*
 syncplay_setup.nsi
 dist.7z
 .*
