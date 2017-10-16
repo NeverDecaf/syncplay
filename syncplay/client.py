@@ -240,8 +240,9 @@ class SyncplayClient(object):
                             self.playlist.loadNextFileInPlaylist(prepareToAdvance = False)
                     else:
                         self.setPosition(skip[1])
-                        for wait in range(1,5):
-                            reactor.callLater(wait, self.doubleCheckSeekFile, skip[1])
+                        if skip[0] == 0:
+                            for wait in range(1,5):
+                                reactor.callLater(wait, self.doubleCheckSeekFile, skip[1])
                     del self.chapterSkips[i]
                     break
         
