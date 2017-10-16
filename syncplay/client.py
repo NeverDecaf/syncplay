@@ -208,6 +208,11 @@ class SyncplayClient(object):
             self.setPosition(-1)
             self.ui.showDebugMessage("Rewinded after double-check")
 
+    def doubleCheckSeekFile(self, pos):
+        if abs(self.getStoredPlayerPosition()-pos) > 5:
+            self.setPosition(pos)
+            self.ui.showDebugMessage("Reseeked after double-check")
+
     def updatePlayerStatus(self, paused, position):
         position -= self.getUserOffset()
         pauseChange, seeked = self._determinePlayerStateChange(paused, position)
@@ -222,26 +227,33 @@ class SyncplayClient(object):
                 not (not self.playlist.notJustChangedPlaylist() and abs(position - currentLength ) < constants.PLAYLIST_LOAD_NEXT_FILE_TIME_FROM_END_THRESHOLD):
                 pauseChange = self._toggleReady(pauseChange, paused)
 
-        if self._lastGlobalUpdate:
+        # skip OP/ED
+        autoSkip = False
+        if self._protocol and self._playerPosition>1:
+            for i in range(len(self.chapterSkips)):
+                skip = self.chapterSkips[i]
+                if self._playerPosition<skip[1] and self._playerPosition>skip[0]:
+                    self.playerPositionBeforeLastSeek = self.getGlobalPosition()
+                    autoSkip = True
+                    if skip[1] > currentLength-1:
+                        if self.playlist.notJustChangedPlaylist():
+                            self.playlist.loadNextFileInPlaylist(prepareToAdvance = False)
+                    else:
+                        self.setPosition(skip[1])
+                        for wait in range(1,5):
+                            reactor.callLater(wait, self.doubleCheckSeekFile, skip[1])
+                    del self.chapterSkips[i]
+                    break
+        
+        # only perform this if auto-skip hasn't been done (this pervents rapid double-seeks which break the sync)
+        if self._lastGlobalUpdate and not autoSkip:
             self._lastPlayerUpdate = time.time()
             if (pauseChange or seeked) and self._protocol:
                 if seeked:
                     self.playerPositionBeforeLastSeek = self.getGlobalPosition()
                 self._protocol.sendState(self.getPlayerPosition(), self.getPlayerPaused(), seeked, None, True)
 
-        # skip OP/ED
-        if self._protocol and self._playerPosition>1:
-            for i in range(len(self.chapterSkips)):
-                skip = self.chapterSkips[i]
-                if self._playerPosition<skip[1] and self._playerPosition>skip[0]:
-                    self.playerPositionBeforeLastSeek = self.getGlobalPosition()
-                    if skip[1] > currentLength-1:
-                        if self.playlist.notJustChangedPlaylist():
-                            self.playlist.loadNextFileInPlaylist()
-                    else:
-                        self.setPosition(skip[1])
-                    del self.chapterSkips[i]
-                    return
+
                 
     def prepareToAdvancePlaylist(self):
         if self.playlist.canSwitchToNextPlaylistIndex():
@@ -493,6 +505,7 @@ class SyncplayClient(object):
         self.userlist.currentUser.setFile(filename, duration, size, path)
         self.sendFile()
         self.playlist.changeToPlaylistIndexFromFilename(filename)
+        self.parseChapterSkips(filename)
 
     def setTrustedDomains(self, newTrustedDomains):
         from syncplay.ui.ConfigurationGetter import ConfigurationGetter
@@ -534,7 +547,7 @@ class SyncplayClient(object):
             self.establishRewindDoubleCheck()
             self.lastRewindTime = time.time()
             self.autoplayCheck()
-        self.parseChapterSkips(filePath)
+##        self.parseChapterSkips(filePath)
 
     def parseChapterSkips(self, filePath):
         filePath = self.fileSwitch.findFilepath(os.path.basename(filePath), highPriority=True)
@@ -1511,9 +1524,10 @@ class SyncplayPlaylist():
                 self._client.addPlayerReadyCallback(lambda x: self.changeToPlaylistIndex(index, username))
             return
         try:
+            if self._client.playerPositionBeforeLastSeek:
+                self._client.rewindFile() # this rewind is what makes playlist file switching smooth and intuitive.
             filename = self._playlist[index]
             self._ui.setPlaylistIndexFilename(filename)
-            self._client.parseChapterSkips(filename)
             if not self._client.sharedPlaylistIsEnabled():
                 self._playlistIndex = index
             if username is not None and self._client.userlist.currentUser.file and filename == self._client.userlist.currentUser.file['name']:
@@ -1529,6 +1543,7 @@ class SyncplayPlaylist():
         else:
             self._ui.showMessage(getMessage("playlist-selection-changed-notification").format(username))
             self.switchToNewPlaylistIndex(index)
+##        self._client.parseChapterSkips(filename)
 
     def canSwitchToNextPlaylistIndex(self):
         if self._thereIsNextPlaylistIndex() and self._client.sharedPlaylistIsEnabled():
@@ -1664,10 +1679,10 @@ class SyncplayPlaylist():
         return secondsSinceLastChange > constants.PLAYLIST_LOAD_NEXT_FILE_TIME_FROM_END_THRESHOLD
 
     @needsSharedPlaylistsEnabled
-    def loadNextFileInPlaylist(self):
+    def loadNextFileInPlaylist(self,prepareToAdvance=True):
         if self._notPlayingCurrentIndex():
             return
-
+        
         if len(self._playlist) == 1 and self._client.loopSingleFiles():
             self._lastPlaylistIndexChange = time.time()
             self._client.rewindFile()
@@ -1675,7 +1690,8 @@ class SyncplayPlaylist():
             reactor.callLater(0.5, self._client.setPaused, False,)
 
         elif self._thereIsNextPlaylistIndex():
-            self._client.prepareToAdvancePlaylist()
+            if prepareToAdvance:
+                self._client.prepareToAdvancePlaylist()
             self.switchToNewPlaylistIndex(self._nextPlaylistIndex(), resetPosition=True)
 
     def _updateUndoPlaylistBuffer(self, newPlaylist, newRoom):
