@@ -21,7 +21,7 @@ import subprocess as sp
 
 OP_LENGTH_RANGE = (59,110)
 ED_LENGTH_RANGE = (59,110)
-NEXT_EP_RANGE = (0,35)
+PREVIEW_RANGE = (0,40)
 
 
 class SyncClientFactory(ClientFactory):
@@ -558,15 +558,16 @@ class SyncplayClient(object):
                     self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
                 elif OP_LENGTH_RANGE[0] < chapterLengths[0] < OP_LENGTH_RANGE[1]:
                     self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
-                if ED_LENGTH_RANGE[0] < chapterLengths[-1] < ED_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
-                elif ED_LENGTH_RANGE[0] < chapterLengths[-2] < ED_LENGTH_RANGE[1]:
-                    if self.skipPreview and NEXT_EP_RANGE[0] < chapterLengths[-1] < NEXT_EP_RANGE[1]:
+                if ED_LENGTH_RANGE[0] < chapterLengths[-2] < ED_LENGTH_RANGE[1]:# and chapterLengths[-1] < chapterLengths[-2]:
+                    if self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
                         self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-1]['end'])))
                     else:
                         self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
-            elif self.skipPreview and NEXT_EP_RANGE[0] < chapterLengths[-1] < NEXT_EP_RANGE[1]:
+                elif ED_LENGTH_RANGE[0] < chapterLengths[-1] < ED_LENGTH_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+            elif self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
                 self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+        print self.chapterSkips
         
     def __getChapterData(self, filePath):
         chapters = []
