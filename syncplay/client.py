@@ -567,7 +567,6 @@ class SyncplayClient(object):
                     self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
             elif self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
                 self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
-        print self.chapterSkips
         
     def __getChapterData(self, filePath):
         chapters = []
