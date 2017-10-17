@@ -251,6 +251,7 @@ en = {
     "skip-menu-label" : u"Show skip buttons",
     "skip-guiopbuttonlabel" : u"Skip OP/ED",
     "skip-guipreviewbuttonlabel" : u"Skip Preview",
+    "skip-guirecapbuttonlabel" : u"Skip Recap",
     "autoplay-guipushbuttonlabel" : u"Play when all ready",
     "autoplay-minimum-label" : u"Min users:",
 
@@ -366,6 +367,7 @@ en = {
     "ready-tooltip" : "Indicates whether you are ready to watch.",
     "skip-op-tooltip" : "Attempt to skip anime opening and endings.",
     "skip-preview-tooltip" : "Attempt to skip anime next episode previews.",
+    "skip-recap-tooltip" : "Attempt to skip anime episode recaps (last time on...).",
     "autoplay-tooltip" : "Auto-play when all users who have readiness indicator are ready and minimum user threshold met.",
     "switch-to-file-tooltip" : u"Double click to switch to {}", # Filename
     "sendmessage-tooltip" : u"Send message to room",

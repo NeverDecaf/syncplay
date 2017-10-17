@@ -22,6 +22,7 @@ import subprocess as sp
 OP_LENGTH_RANGE = (59,110)
 ED_LENGTH_RANGE = (59,110)
 PREVIEW_RANGE = (0,40)
+RECAP_RANGE = (0,40)
 
 
 class SyncClientFactory(ClientFactory):
@@ -125,6 +126,7 @@ class SyncplayClient(object):
         self.autoPlay = False
         self.skipOP = False
         self.skipPreview = False
+        self.skipRecap = False
         self.autoPlayThreshold = None
 
         self.autoplayTimer = task.LoopingCall(self.autoplayCountdown)
@@ -555,8 +557,13 @@ class SyncplayClient(object):
         if len(chapters)>2:
             if self.skipOP:
                 if OP_LENGTH_RANGE[0] < chapterLengths[1] < OP_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
+                    if self.skipRecap and RECAP_RANGE[0] < chapterLengths[0] < RECAP_RANGE[1]:
+                        self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[1]['end'])))
+                    else:
+                        self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
                 elif OP_LENGTH_RANGE[0] < chapterLengths[0] < OP_LENGTH_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                elif self.skipRecap and RECAP_RANGE[0] < chapterLengths[0] < RECAP_RANGE[1]:
                     self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
                 if ED_LENGTH_RANGE[0] < chapterLengths[-2] < ED_LENGTH_RANGE[1]:# and chapterLengths[-1] < chapterLengths[-2]:
                     if self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
@@ -565,9 +572,14 @@ class SyncplayClient(object):
                         self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
                 elif ED_LENGTH_RANGE[0] < chapterLengths[-1] < ED_LENGTH_RANGE[1]:
                     self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
-            elif self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
-                self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
-        
+                elif self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+            else:
+                if self.skipRecap and RECAP_RANGE[0] < chapterLengths[0] < RECAP_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                if self.skipPreview and PREVIEW_RANGE[0] < chapterLengths[-1] < PREVIEW_RANGE[1]:
+                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+
     def __getChapterData(self, filePath):
         chapters = []
         command = [ "ffmpeg", '-i', filePath]
@@ -801,7 +813,12 @@ class SyncplayClient(object):
         self.skipPreview = newState
         if self.userlist.currentUser.file:
             self.parseChapterSkips(self.userlist.currentUser.file['name'])
-
+            
+    def changeSkipRecapState(self, newState):
+        self.skipRecap = newState
+        if self.userlist.currentUser.file:
+            self.parseChapterSkips(self.userlist.currentUser.file['name'])
+            
     def changeAutoPlayThrehsold(self, newThreshold):
         oldAutoplayConditionsMet = self.autoplayConditionsMet()
         self.autoPlayThreshold = newThreshold

@@ -395,8 +395,10 @@ class MainWindow(QtGui.QMainWindow):
             if not ffmpegSupport:
                 self.disableSkipOPButton()
                 self.disableSkipPreviewButton()
+                self.disableSkipRecapButton()
             self.changeSkipOPState()
             self.changeSkipPreviewState()
+            self.changeSkipRecapState()
         except:
             self.showErrorMessage("Failed to load some settings.")
         self.automaticUpdateCheck()
@@ -1368,10 +1370,22 @@ class MainWindow(QtGui.QMainWindow):
         window.skipLayout.setAlignment(Qt.AlignLeft)
         window.skipLayout.setContentsMargins(0,0,0,0)
         window.skipFrame.setLayout(window.skipLayout)
-
-        window.skipOPPushButton = QtGui.QPushButton()
+        
         skipFont = QtGui.QFont()
         skipFont.setWeight(QtGui.QFont.Bold)
+        
+        window.skipRecapPushButton = QtGui.QPushButton()
+	window.skipRecapPushButton.setText(getMessage("skip-guirecapbuttonlabel"))
+        window.skipRecapPushButton.setCheckable(True)
+        window.skipRecapPushButton.setAutoExclusive(False)
+        window.skipRecapPushButton.toggled.connect(self.changeSkipRecapState)
+        window.skipRecapPushButton.setFont(skipFont)
+        window.skipRecapPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
+        window.skipRecapPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipRecapPushButton.setToolTip(getMessage("skip-recap-tooltip"))
+        window.skipLayout.addWidget(window.skipRecapPushButton)
+        
+        window.skipOPPushButton = QtGui.QPushButton()
 	window.skipOPPushButton.setText(getMessage("skip-guiopbuttonlabel"))
         window.skipOPPushButton.setCheckable(True)
         window.skipOPPushButton.setAutoExclusive(False)
@@ -1393,31 +1407,7 @@ class MainWindow(QtGui.QMainWindow):
         window.skipPreviewPushButton.setToolTip(getMessage("skip-preview-tooltip"))
         window.skipLayout.addWidget(window.skipPreviewPushButton)
         
-##        window.seekInput = QtGui.QLineEdit()
-##        window.seekInput.returnPressed.connect(self.seekFromButton)
-##        window.seekButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'clock_go.png'), "")
-##        window.seekButton.setToolTip(getMessage("seektime-menu-label"))
-##        window.seekButton.pressed.connect(self.seekFromButton)
-##        window.seekInput.setText("0:00")
-##        window.seekInput.setFixedWidth(60)
-##        window.skipLayout.addWidget(window.seekInput)
-##        window.skipLayout.addWidget(window.seekButton)
-##        window.unseekButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'arrow_undo.png'), "")
-##        window.unseekButton.setToolTip(getMessage("undoseek-menu-label"))
-##        window.unseekButton.pressed.connect(self.undoSeek)
-##
-##        window.miscLayout = QtGui.QHBoxLayout()
-##        window.skipLayout.addWidget(window.unseekButton)
-##        window.playButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + u'control_play_blue.png'), "")
-##        window.playButton.setToolTip(getMessage("play-menu-label"))
-##        window.playButton.pressed.connect(self.play)
-##        window.skipLayout.addWidget(window.playButton)
-##        window.pauseButton = QtGui.QPushButton(QtGui.QIcon(self.resourcespath + 'control_pause_blue.png'), "")
-##        window.pauseButton.setToolTip(getMessage("pause-menu-label"))
-##        window.pauseButton.pressed.connect(self.pause)
-##        window.skipLayout.addWidget(window.pauseButton)
         window.skipFrame.setMaximumHeight(window.skipFrame.sizeHint().height())
-##        window.skipFrame.setMaximumWidth(window.skipFrame.sizeHint().width())
         window.outputLayout.addWidget(window.skipFrame)
         
     def addMenubar(self, window):
@@ -1577,6 +1567,16 @@ class MainWindow(QtGui.QMainWindow):
         self.skipOPPushButton.blockSignals(True)
         self.skipOPPushButton.setEnabled(False)
         self.skipOPPushButton.blockSignals(False)
+
+    def disableSkipPreviewButton(self):
+        self.skipPreviewPushButton.blockSignals(True)
+        self.skipPreviewPushButton.setEnabled(False)
+        self.skipPreviewPushButton.blockSignals(False)
+
+    def disableSkipRecapButton(self):
+        self.skipRecapPushButton.blockSignals(True)
+        self.skipRecapPushButton.setEnabled(False)
+        self.skipRecapPushButton.blockSignals(False)
         
     def updateSkipOPState(self, newState):
         oldState = self.skipOPPushButton.isChecked()
@@ -1585,11 +1585,6 @@ class MainWindow(QtGui.QMainWindow):
             self.skipOPPushButton.setChecked(newState)
             self.skipOPPushButton.blockSignals(False)
         self.updateSkipOPIcon()
-
-    def disableSkipPreviewButton(self):
-        self.skipPreviewPushButton.blockSignals(True)
-        self.skipPreviewPushButton.setEnabled(False)
-        self.skipPreviewPushButton.blockSignals(False)
         
     def updateSkipPreviewState(self, newState):
         oldState = self.skipPreviewPushButton.isChecked()
@@ -1598,6 +1593,14 @@ class MainWindow(QtGui.QMainWindow):
             self.skipPreviewPushButton.setChecked(newState)
             self.skipPreviewPushButton.blockSignals(False)
         self.updateSkipPreviewIcon()
+        
+    def updateSkipRecapState(self, newState):
+        oldState = self.skipRecapPushButton.isChecked()
+        if newState != oldState and newState != None:
+            self.skipRecapPushButton.blockSignals(True)
+            self.skipRecapPushButton.setChecked(newState)
+            self.skipRecapPushButton.blockSignals(False)
+        self.updateSkipRecapIcon()
         
     @needsClient
     def changeAutoplayState(self, source=None):
@@ -1638,7 +1641,16 @@ class MainWindow(QtGui.QMainWindow):
                 self._syncplayClient.changeSkipPreviewState(self.skipPreviewPushButton.isChecked())
             else:
                 self.showDebugMessage("Tried to set SkipPreview too soon")
-            
+                
+    @needsClient
+    def changeSkipRecapState(self, source=None):
+        self.updateSkipRecapIcon()
+        if self.skipRecapPushButton.isEnabled():
+            if self._syncplayClient:
+                self._syncplayClient.changeSkipRecapState(self.skipRecapPushButton.isChecked())
+            else:
+                self.showDebugMessage("Tried to set SkipRecap too soon")
+                
     def updateSkipOPIcon(self):
         ready = self.skipOPPushButton.isChecked()
         if ready:
@@ -1652,6 +1664,13 @@ class MainWindow(QtGui.QMainWindow):
             self.skipPreviewPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'tick_checkbox.png'))
         else:
             self.skipPreviewPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'empty_checkbox.png'))
+            
+    def updateSkipRecapIcon(self):
+        ready = self.skipRecapPushButton.isChecked()
+        if ready:
+            self.skipRecapPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'tick_checkbox.png'))
+        else:
+            self.skipRecapPushButton.setIcon(QtGui.QIcon(self.resourcespath + 'empty_checkbox.png'))
             
     def automaticUpdateCheck(self):
         currentDateTime = datetime.utcnow()
@@ -1803,6 +1822,7 @@ class MainWindow(QtGui.QMainWindow):
         settings.setValue("showSkipButtons", self.skipAction.isChecked())
         settings.setValue("skipOPChecked", self.skipOPPushButton.isChecked())
         settings.setValue("skipPreviewChecked", self.skipPreviewPushButton.isChecked())
+        settings.setValue("skipRecapChecked", self.skipRecapPushButton.isChecked())
         settings.setValue("autoplayChecked", self.autoplayPushButton.isChecked())
         settings.setValue("autoplayMinUsers", self.autoplayThresholdSpinbox.value())
         settings.endGroup()
@@ -1838,6 +1858,9 @@ class MainWindow(QtGui.QMainWindow):
         if settings.value("skipPreviewChecked", "false") == "true":
             self.updateSkipPreviewState(True)
             self.skipPreviewPushButton.setChecked(True)
+        if settings.value("skipRecapChecked", "false") == "true":
+            self.updateSkipRecapState(True)
+            self.skipRecapPushButton.setChecked(True)
         self.autoplayThresholdSpinbox.blockSignals(True)
         self.autoplayThresholdSpinbox.setValue(int(settings.value("autoplayMinUsers", 2)))
         self.autoplayThresholdSpinbox.blockSignals(False)
