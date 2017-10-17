@@ -19,6 +19,10 @@ FALLBACK_INITIAL_LANGUAGE = "en"
 FALLBACK_PUBLIC_SYNCPLAY_SERVERS = [[u'syncplay.pl:8995 (France)', u'syncplay.pl:8995'],[u'syncplay.pl:8996 (France)', u'syncplay.pl:8996'],[u'syncplay.pl:8997 (France)', u'syncplay.pl:8997'],[u'syncplay.pl:8998 (France)', u'syncplay.pl:8998'],[u'syncplay.pl:8999 (France)', u'syncplay.pl:8999']]
 PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH = 10 # Seconds
 PLAYLIST_LOAD_NEXT_FILE_TIME_FROM_END_THRESHOLD = 5 # Seconds (only triggered if file is paused, e.g. due to EOF)
+OP_LENGTH_RANGE = (59,110)
+ED_LENGTH_RANGE = (59,110)
+PREVIEW_LENGTH_RANGE = (0,40)
+RECAP_LENGTH_RANGE = (0,40)
 
 #Overriden by config
 SHOW_OSD = True  # Sends Syncplay messages to media player OSD
