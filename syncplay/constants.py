@@ -9,7 +9,7 @@ UI_TIME_FORMAT = "[%X] "
 CONFIG_NAMES = [".syncplay", "syncplay.ini"]  #Syncplay searches first to last
 DEFAULT_CONFIG_NAME_WINDOWS = "syncplay.ini"
 DEFAULT_CONFIG_NAME_LINUX = ".syncplay"
-RECENT_CLIENT_THRESHOLD = "1.4.0"  #This and higher considered 'recent' clients (no warnings)
+RECENT_CLIENT_THRESHOLD = "1.5.0"  #This and higher considered 'recent' clients (no warnings)
 WARN_OLD_CLIENTS = True  #Use MOTD to inform old clients to upgrade
 LIST_RELATIVE_CONFIGS = True  # Print list of relative configs loaded
 SHOW_CONTACT_INFO = True  # Displays dev contact details below list in GUI
@@ -63,7 +63,7 @@ TAB_PADDING = 30
 
 # Maximum character lengths (for client and server)
 MAX_CHAT_MESSAGE_LENGTH = 50 # Number of displayed characters
-MAX_USERNAME_LENGTH = 12 # Number of displayed characters
+MAX_USERNAME_LENGTH = 16 # Number of displayed characters
 MAX_ROOM_NAME_LENGTH = 35 # Number of displayed characters
 MAX_FILENAME_LENGTH = 250 # Number of displayed characters
 
@@ -197,6 +197,8 @@ UNPAUSE_IFALREADYREADY_MODE = "IfAlreadyReady"
 UNPAUSE_IFOTHERSREADY_MODE = "IfOthersReady"
 UNPAUSE_IFMINUSERSREADY_MODE = "IfMinUsersReady"
 UNPAUSE_ALWAYS_MODE = "Always"
+
+VLC_EOF_DURATION_THRESHOLD = 2.0
 
 PRIVACY_HIDDENFILENAME = "**Hidden filename**"
 INVERTED_STATE_MARKER = "*"
