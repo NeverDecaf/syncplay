@@ -1,3 +1,10 @@
+## This Fork
+Ability to skip recap, OP/ED and previews when watching (anime) files in a playlist.
+This option is only available in GUI mode with ffmpeg installed.
+
+Discord integration: will update your now playing status to reflect the file you are watching.
+https://github.com/TheRacingLion/Discord-SelfBot/wiki/Discord-Token-Tutorial
+
 #  Syncplay
 
 Solution to synchronize video playback across multiple instances of mplayer2, mpv, Media Player Classic (MPC-HC) and VLC over the Internet.
