@@ -24,6 +24,7 @@ class ConfigurationGetter(object):
                         "noStore": False,
                         "room": "",
                         "password": None,
+                        "discordtoken": None,
                         "playerPath": None,
                         "perPlayerArguments": None,
                         "mediaSearchDirectories": None,
@@ -116,7 +117,7 @@ class ConfigurationGetter(object):
             "perPlayerArguments",
             "mediaSearchDirectories",
             "trustedDomains",
-            "publicServers",
+            "publicServers"
         ]
 
         self._numeric = [
@@ -128,7 +129,7 @@ class ConfigurationGetter(object):
 
         self._iniStructure = {
                         "server_data": ["host", "port", "password"],
-                        "client_settings": ["name", "room", "playerPath",
+                        "client_settings": ["name", "room", "discordtoken", "playerPath",
                             "perPlayerArguments", "slowdownThreshold",
                             "rewindThreshold", "fastforwardThreshold",
                             "slowOnDesync", "rewindOnDesync",

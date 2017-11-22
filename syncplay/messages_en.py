@@ -176,6 +176,7 @@ en = {
     "name-label" :  "Username (optional):",
     "password-label" :  "Server password (if any):",
     "room-label" : "Default room: ",
+    "discord-label" : "Discord token (optional): ",
 
     "media-setting-title" : "Media player settings",
     "executable-path-label" : "Path to media player:",
@@ -323,6 +324,7 @@ en = {
     "name-tooltip" : "Nickname you will be known by. No registration, so can easily change later. Random name generated if none specified.",
     "password-tooltip" : "Passwords are only needed for connecting to private servers.",
     "room-tooltip" : "Room to join upon connection can be almost anything, but you will only be synchronised with people in the same room.",
+    "discordtoken-tooltip" : "If provided, will update your discord status to match the file you are watching.",
 
     "executable-path-tooltip" : "Location of your chosen supported media player (mpv, VLC, MPC-HC or mplayer2).",
     "media-path-tooltip" : "Location of video or stream to be opened. Necessary for mplayer2.",

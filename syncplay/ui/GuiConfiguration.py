@@ -92,6 +92,8 @@ class ConfigDialog(QtGui.QDialog):
                 self.mediapathTextbox.show()
                 self.mediapathLabel.show()
                 self.mediabrowseButton.show()
+                self.discordTokenTextbox.show()
+                self.discordTokenLabel.show()
                 self.runButton.show()
                 self.saveMoreState(True)
                 self.tabListWidget.setCurrentRow(0)
@@ -103,6 +105,8 @@ class ConfigDialog(QtGui.QDialog):
                 self.playerargsTextbox.hide()
                 self.playerargsLabel.hide()
                 self.runButton.hide()
+                self.discordTokenTextbox.hide()
+                self.discordTokenLabel.hide()
                 if self.mediapathTextbox.text() == "":
                     self.mediapathTextbox.hide()
                     self.mediapathLabel.hide()
@@ -560,7 +564,9 @@ class ConfigDialog(QtGui.QDialog):
         self.serverpassTextbox = QLineEdit(self)
         self.serverpassTextbox.setText(self.storedPassword)
         self.defaultroomLabel = QLabel(getMessage("room-label"), self)
-
+        self.discordTokenLabel = QLabel(getMessage("discord-label"), self)
+        self.discordTokenTextbox = QLineEdit(self)
+        
         self.hostLabel.setObjectName("host")
         self.hostCombobox.setObjectName(constants.LOAD_SAVE_MANUALLY_MARKER + "host")
         self.usernameLabel.setObjectName("name")
@@ -571,7 +577,9 @@ class ConfigDialog(QtGui.QDialog):
         self.hostCombobox.currentIndexChanged.connect(self.updatePasswordVisibilty)
         self.defaultroomLabel.setObjectName("room")
         self.defaultroomTextbox.setObjectName("room")
-
+        self.discordTokenLabel.setObjectName("discordtoken")
+        self.discordTokenTextbox.setObjectName("discordtoken")
+        
         self.usernameTextbox.setMaxLength(constants.MAX_USERNAME_LENGTH)
         self.defaultroomTextbox.setMaxLength(constants.MAX_ROOM_NAME_LENGTH)
 
@@ -585,6 +593,8 @@ class ConfigDialog(QtGui.QDialog):
         self.connectionSettingsLayout.addWidget(self.usernameTextbox, 2, 1, 1, 2)
         self.connectionSettingsLayout.addWidget(self.defaultroomLabel, 3, 0)
         self.connectionSettingsLayout.addWidget(self.defaultroomTextbox, 3, 1, 1, 2)
+        self.connectionSettingsLayout.addWidget(self.discordTokenLabel, 4, 0)
+        self.connectionSettingsLayout.addWidget(self.discordTokenTextbox, 4, 1, 1, 2)
         self.connectionSettingsGroup.setLayout(self.connectionSettingsLayout)
         self.connectionSettingsGroup.setMaximumHeight(self.connectionSettingsGroup.minimumSizeHint().height())
 
@@ -1130,6 +1140,8 @@ class ConfigDialog(QtGui.QDialog):
             self.resetButton.hide()
             self.playerargsTextbox.hide()
             self.playerargsLabel.hide()
+            self.discordTokenLabel.hide()
+            self.discordTokenTextbox.hide()
             self.runButton.hide()
             if self.mediapathTextbox.text() == "":
                 self.mediapathTextbox.hide()

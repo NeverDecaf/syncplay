@@ -17,6 +17,11 @@ from syncplay.constants import PRIVACY_SENDHASHED_MODE, PRIVACY_DONTSEND_MODE, \
     PRIVACY_HIDDENFILENAME
 import collections
 import subprocess as sp
+import requests
+import zlib
+import threading
+import json
+from ws4py.client import WebSocketBaseClient
 
 class SyncClientFactory(ClientFactory):
     def __init__(self, client, retry=constants.RECONNECT_RETRIES):
@@ -58,10 +63,158 @@ class SyncClientFactory(ClientFactory):
 
     def stopRetrying(self):
         self._timesTried = self.retry
+        
+class ResumeWebSocket(Exception):
+    """Signals to initialise via RESUME opcode instead of IDENTIFY."""
+    'you havent actually implemented this yet, needs to be done.'
+    pass
+class KeepAliveHandler(threading.Thread):
+    def __init__(self, seconds, socket, **kwargs):
+        threading.Thread.__init__(self, **kwargs)
+        self.seconds = seconds
+        self.socket = socket
+        self.stop = threading.Event()
+
+    def run(self):
+        while not self.stop.wait(self.seconds):
+            payload = {
+                'op': 1,
+                'd': int(time.time())
+            }
+
+            msg = 'Keeping websocket alive with timestamp {0}'
+            self.socket.send(json.dumps(payload, separators=(',', ':')))
+            
+class WebSocket(WebSocketBaseClient):
+    def __init__(self, url, token):
+        WebSocketBaseClient.__init__(self, url,
+                                     protocols=['http-only', 'chat'])
+        self.keep_alive = None
+        self.token = token
+
+    def opened(self):
+        pass
+
+    def closed(self, code, reason=None):
+        if self.keep_alive is not None:
+            self.keep_alive.stop.set()
+
+    def handshake_ok(self):
+        pass
+
+    def send(self, payload, binary=False):
+        WebSocketBaseClient.send(self, payload, binary)
+
+    def received_message(self, msg):
+        if msg.is_binary:
+            msg = zlib.decompress(msg.data, 15, 10490000)
+            if sys.version_info[0] == 2:
+                msg = str(msg).decode('utf-8')
+            else:
+                msg = msg.decode('utf-8')
+            response = json.loads(msg)
+        else:
+            response = json.loads(str(msg))
+            
+        op = response.get('op')
+        data = response.get('d')
+        if op == 7: #RECONNECT
+            # "reconnect" can only be handled by the Client
+            # so we terminate our connection and raise an
+            # internal exception signalling to reconnect.
+            self.close()
+            raise ResumeWebsocket()
+        if op==10: # HELLO
+            interval = data['heartbeat_interval'] / 1000.0
+            self.keep_alive = KeepAliveHandler(interval, self)
+            self.keep_alive.start()
+            payload = {
+            'op': 2,
+            'd': {
+                'token': self.token,
+                'properties': {
+                    '$os': sys.platform,
+                    '$browser': 'syncplay',
+                    '$device': 'syncplay',
+                    '$referrer': '',
+                    '$referring_domain': ''
+                },
+                'compress': True,
+                'large_threshold': 50,
+                'v': 3,
+            }
+            }
+            self.send(json.dumps(payload, separators=(',', ':')))
+        if op==11: # HEARTBEAT ACK
+            pass
+##        if op != 0:
+##            print("Unhandled op {}".format(op))
+##            return
+##        event = response.get('t')
+        
+    def close(self, code=1000, reason=''):
+        payload = {
+            'op': 3,
+            'd': {
+                'token': self.token,
+                'game': {'name':None},
+                'afk': False,
+                'since': int(time.time() * 1000),
+                'status': "online",
+            }
+        }
+        self.send(json.dumps(payload, separators=(',', ':')))
+        super(WebSocketBaseClient,self).close(code,reason)
+
+class MiniDiscord:
+    def __init__(self, token):
+        self.token = token
+        self._close = False
+        g = requests.get('https://discordapp.com/api/gateway',headers={'authorization':self.token})
+        self.gateway = g.json().get('url')+'/?v=6&encoding=json'
+        self.ws = WebSocket(self.gateway, self.token)
+        self.is_connected = threading.Event()
+        
+    def start(self):
+        self.is_connected.clear()
+        self.ws = WebSocket(self.gateway, self.token)
+        self.ws.connect()
+        self.is_connected.set()
+        self.ws.run()
+        while not self._close:
+            self.ws.run()
+            self.is_connected.clear()
+                # The WebSocket is guaranteed to be terminated after ws.run().
+                # Check if we wanted it to close and reconnect if not.
+            if not self._close:
+                g = requests.get('https://discordapp.com/api/gateway',headers={'authorization':self.token})
+                self.gateway = g.json().get('url')+'/?v=6&encoding=json'
+                self.ws = WebSocket(dispatch,self.gateway)
+                self.ws.connect()
+                self.is_connected.set()
+
+    def close(self):
+        self._close = True
+        self.ws.close()
+
+    def updateGame(self,gamename):
+        if self.is_connected.wait(2):
+            data = {
+                'op': 3,
+                'd': {
+                    'token': self.token,
+                    'game': {'name':gamename,'type':0},
+                    'afk': False,
+                    'since': int(time.time() * 1000),
+                    'status': "online",
+                }
+            }
+            self.ws.send(json.dumps(data, separators=(',', ':')))
+        else:
+            return None
 
 class SyncplayClient(object):
     chapterSkips = []
-    
     def __init__(self, playerClass, ui, config):
         constants.SHOW_OSD = config['showOSD']
         constants.SHOW_OSD_WARNINGS = config['showOSDWarnings']
@@ -133,6 +286,15 @@ class SyncplayClient(object):
         self.fileSwitch = FileSwitchManager(self)
         self.playlist = SyncplayPlaylist(self)
 
+        self.lastDiscordUpdate = 0
+        if config['discordtoken']:
+            try:
+                self.discordClient = MiniDiscord(config['discordtoken'])
+                thread=threading.Thread(target=self.discordClient.start)
+                thread.start()
+            except:
+                self.discordClient = None
+
         if constants.LIST_RELATIVE_CONFIGS and self._config.has_key('loadedRelativePaths') and self._config['loadedRelativePaths']:
             paths = "; ".join(self._config['loadedRelativePaths'])
             self.ui.showMessage(getMessage("relative-config-notification").format(paths), noPlayer=True, noTimestamp=True)
@@ -141,7 +303,7 @@ class SyncplayClient(object):
             missingStrings = getMissingStrings()
             if missingStrings is not None and missingStrings is not "":
                 self.ui.showDebugMessage(u"MISSING/UNUSED STRINGS DETECTED:\n{}".format(missingStrings))
-
+        
     def initProtocol(self, protocol):
         self._protocol = protocol
 
@@ -172,6 +334,13 @@ class SyncplayClient(object):
             return
         if self._player:
             self._player.askForStatus()
+            now = time.time()
+            if now - self.lastDiscordUpdate > constants.DISCORD_MIN_UPDATE_TIME:
+                try:
+                    self.lastDiscordUpdate = now
+                    self.discordClient.updateGame(self.userlist.currentUser.file["name"])
+                except:
+                    pass
         self.checkIfConnected()
 
     def checkIfConnected(self):
@@ -775,6 +944,8 @@ class SyncplayClient(object):
         if not self._running:
             return
         self._running = False
+        if self.discordClient:
+            self.discordClient.close()
         if self.protocolFactory:
             self.protocolFactory.stopRetrying()
         self.destroyProtocol()

@@ -222,3 +222,5 @@ DEFAULT_TRUSTED_DOMAINS = [u"youtube.com",u"youtu.be"]
 TRUSTABLE_WEB_PROTOCOLS = [u"http://www.",u"https://www.",u"http://",u"https://"]
 
 PRIVATE_FILE_FIELDS = ["path"]
+
+DISCORD_MIN_UPDATE_TIME = 15
