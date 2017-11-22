@@ -91,6 +91,7 @@ class WebSocket(WebSocketBaseClient):
                                      protocols=['http-only', 'chat'])
         self.keep_alive = None
         self.token = token
+        self.initial_status = u'online'
 
     def opened(self):
         pass
@@ -147,10 +148,11 @@ class WebSocket(WebSocketBaseClient):
             self.send(json.dumps(payload, separators=(',', ':')))
         if op==11: # HEARTBEAT ACK
             pass
-##        if op != 0:
-##            print("Unhandled op {}".format(op))
-##            return
-##        event = response.get('t')
+        if op==0 and response.get('t')=='READY':
+            try:
+                self.initial_status = data[u'user_settings'][u'status']
+            except:
+                pass
         
     def close(self, code=1000, reason=''):
         payload = {
@@ -160,7 +162,7 @@ class WebSocket(WebSocketBaseClient):
                 'game': {'name':None},
                 'afk': False,
                 'since': int(time.time() * 1000),
-                'status': "online",
+                'status': self.initial_status,
             }
         }
         self.send(json.dumps(payload, separators=(',', ':')))
@@ -207,7 +209,7 @@ class MiniDiscord:
                     'game': {'name':gamename,'type':3},
                     'afk': False,
                     'since': int(time.time() * 1000),
-                    'status': "online",
+                    'status': self.ws.initial_status,
                 }
             }
             self.ws.send(json.dumps(data, separators=(',', ':')))
