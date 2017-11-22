@@ -203,7 +203,7 @@ class MiniDiscord:
                 'op': 3,
                 'd': {
                     'token': self.token,
-                    'game': {'name':gamename,'type':0},
+                    'game': {'name':gamename,'type':3},
                     'afk': False,
                     'since': int(time.time() * 1000),
                     'status': "online",
