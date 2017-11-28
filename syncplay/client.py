@@ -201,7 +201,7 @@ class MiniDiscord:
 
     def updateGame(self,gamename):
         if self.is_connected.wait(2):
-            gamename = re.sub('\.[^\.]*$','',re.sub('\s*\[[^\]]*\]\s*','',gamename))
+            gamename = re.sub('\..{2,4}$','',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',gamename))).strip()
             data = {
                 'op': 3,
                 'd': {
