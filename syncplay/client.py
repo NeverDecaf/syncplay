@@ -172,6 +172,7 @@ class MiniDiscord:
     def __init__(self, token):
         self.token = token
         self._close = False
+        os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(utils.findWorkingDir(), "resources/cacert.pem")
         g = requests.get('https://discordapp.com/api/gateway',headers={'authorization':self.token})
         self.gateway = g.json().get('url')+'/?v=6&encoding=json'
         self.ws = WebSocket(self.gateway, self.token)
