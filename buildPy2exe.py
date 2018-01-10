@@ -5,7 +5,7 @@
 
 ) If you get the error "ImportError: No module named zope.interface" then add an empty __init__.py file to the PYTHONDIR/Lib/site-packages/zope directory
 
-2) It is expected that you will have NSIS 3  NSIS from http://nsis.sourceforge.net installed to: C:\Program Files (x86)\NSIS\
+2) It is expected that you will have NSIS 3 NSIS from http://nsis.sourceforge.net installed.
 
 '''
 
@@ -31,8 +31,21 @@ if missingStrings is not None and missingStrings is not "":
     import warnings
     warnings.warn("MISSING/UNUSED STRINGS DETECTED:\n{}".format(missingStrings))
 
-p = "C:\\Program Files (x86)\\NSIS\\makensis.exe" #TODO: how to move that into proper place, huh
-NSIS_COMPILE = p if os.path.isfile(p) else "makensis.exe"
+def get_nsis_path():
+    bin_name = "makensis.exe"
+    from _winreg import HKEY_LOCAL_MACHINE as HKLM
+    from _winreg import KEY_READ, KEY_WOW64_32KEY, OpenKey, QueryValueEx
+
+    try:
+        nsisreg = OpenKey(HKLM, "Software\\NSIS", 0, KEY_READ | KEY_WOW64_32KEY)
+        if QueryValueEx(nsisreg, "VersionMajor")[0] >= 3:
+            return "{}\\{}".format(QueryValueEx(nsisreg, "")[0], bin_name)
+        else:
+            raise Exception("You must install NSIS 3 or later.")
+    except WindowsError:
+        return bin_name
+NSIS_COMPILE = get_nsis_path()
+
 OUT_DIR = "syncplay_v{}".format(syncplay.version)
 SETUP_SCRIPT_PATH = "syncplay_setup.nsi"
 NSIS_SCRIPT_TEMPLATE = r"""
@@ -48,7 +61,7 @@ NSIS_SCRIPT_TEMPLATE = r"""
   Unicode true
 
   Name "Syncplay $version"
-  OutFile "Syncplay $version Setup.exe"
+  OutFile "Syncplay-$version-Setup.exe"
   InstallDir $$PROGRAMFILES\Syncplay
   RequestExecutionLevel admin
   XPStyle on
@@ -651,6 +664,7 @@ guiIcons = ['resources/accept.png', 'resources/arrow_undo.png', 'resources/clock
      'resources/folder_explore.png', 'resources/help.png', 'resources/table_refresh.png',
      'resources/timeline_marker.png','resources/control_play_blue.png',
      'resources/mpc-hc.png','resources/mpc-hc64.png','resources/mplayer.png',
+     'resources/mpc-be.png',
      'resources/mpv.png','resources/vlc.png', 'resources/house.png', 'resources/film_link.png',
      'resources/eye.png', 'resources/comments.png', 'resources/cog_delete.png', 'resources/chevrons_right.png',
      'resources/user_key.png', 'resources/lock.png', 'resources/key_go.png', 'resources/page_white_key.png',

@@ -327,6 +327,10 @@ class MPCHCAPIPlayer(BasePlayer):
         self.__versionUpdate = threading.Event()
         self.__fileUpdate = threading.RLock()
         self.__versionUpdate.clear()
+
+    @staticmethod
+    def getMinVersionErrorMessage():
+        return getMessage("mpc-version-insufficient-error").format(constants.MPC_MIN_VER)
         
     def drop(self):
         self.__preventAsking.set()
@@ -365,7 +369,7 @@ class MPCHCAPIPlayer(BasePlayer):
     def __dropIfNotSufficientVersion(self):
         self._mpcApi.askForVersion()
         if not self.__versionUpdate.wait(0.1) or not self._mpcApi.version:
-            self.reactor.callFromThread(self.__client.ui.showErrorMessage, getMessage("mpc-version-insufficient-error").format(constants.MPC_MIN_VER), True)
+            self.reactor.callFromThread(self.__client.ui.showErrorMessage, self.getMinVersionErrorMessage(), True)
             self.reactor.callFromThread(self.__client.stop, True)
             
     def __testMpcReady(self):
@@ -382,7 +386,7 @@ class MPCHCAPIPlayer(BasePlayer):
             self.reactor.callFromThread(self.__client.ui.showErrorMessage, err.message, True)
             self.reactor.callFromThread(self.__client.stop)
             
-    def initPlayer(self, filePath): 
+    def initPlayer(self, filePath):
         self.__dropIfNotSufficientVersion()
         if not self._mpcApi.version:
             return
@@ -475,7 +479,7 @@ class MPCHCAPIPlayer(BasePlayer):
     
     @staticmethod
     def getIconPath(path):
-        if MPCHCAPIPlayer.getExpandedPath(path).lower().endswith(u'mpc-hc64.exe'.lower()):
+        if MPCHCAPIPlayer.getExpandedPath(path).lower().endswith(u'mpc-hc64.exe'.lower()) or MPCHCAPIPlayer.getExpandedPath(path).lower().endswith(u'mpc-hc64_nvo.exe'.lower()):
             return constants.MPC64_ICONPATH
         else:
             return constants.MPC_ICONPATH
@@ -489,7 +493,7 @@ class MPCHCAPIPlayer(BasePlayer):
     @staticmethod
     def getExpandedPath(path):
         if os.path.isfile(path):
-            if path.lower().endswith(u'mpc-hc.exe'.lower()) or path.lower().endswith(u'mpc-hc64.exe'.lower()):
+            if path.lower().endswith(u'mpc-hc.exe'.lower()) or path.lower().endswith(u'mpc-hc64.exe'.lower()) or path.lower().endswith(u'mpc-hc64_nvo.exe'.lower()) or path.lower().endswith(u'mpc-hc_nvo.exe'.lower()):
                 return path
         if os.path.isfile(path + u"mpc-hc.exe"):
             path += u"mpc-hc.exe"
@@ -497,9 +501,22 @@ class MPCHCAPIPlayer(BasePlayer):
         if os.path.isfile(path + u"\\mpc-hc.exe"):
             path += u"\\mpc-hc.exe"
             return path
+        if os.path.isfile(path + u"mpc-hc_nvo.exe"):
+            path += u"mpc-hc_nvo.exe"
+            return path
+        if os.path.isfile(path + u"\\mpc-hc_nvo.exe"):
+            path += u"\\mpc-hc_nvo.exe"
+            return path
         if os.path.isfile(path + u"mpc-hc64.exe"):
             path += u"mpc-hc64.exe"
             return path
         if os.path.isfile(path + u"\\mpc-hc64.exe"):
             path += u"\\mpc-hc64.exe"
             return path
+        if os.path.isfile(path + u"mpc-hc64_nvo.exe"):
+            path += u"mpc-hc64_nvo.exe"
+            return path
+        if os.path.isfile(path + u"\\mpc-hc64_nvo.exe"):
+            path += u"\\mpc-hc64_nvo.exe"
+            return path
+        

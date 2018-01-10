@@ -6,6 +6,7 @@ import ast
 from syncplay import constants, utils, version, milestone
 from syncplay.messages import getMessage, setLanguage, isValidLanguage
 from syncplay.players.playerFactory import PlayerFactory
+from syncplay.utils import isMacOS
 import codecs
 
 class InvalidConfigValue(Exception):
@@ -404,15 +405,17 @@ class ConfigurationGetter(object):
         self._overrideConfigWithArgs(args)
         if not self._config['noGui']:
             try:
-                from PySide import QtGui  # @UnresolvedImport
-                from PySide.QtCore import QCoreApplication
-                from syncplay.vendor import qt4reactor
-                if QCoreApplication.instance() is None:
-                    self.app = QtGui.QApplication(sys.argv)
-                qt4reactor.install()
-                if sys.platform.startswith('darwin'):
-                    import appnope
-                    appnope.nope()
+	            from syncplay.vendor.Qt import QtWidgets, IsPySide, IsPySide2
+	            from syncplay.vendor.Qt.QtCore import QCoreApplication
+	            from syncplay.vendor import qt5reactor
+	            if not (IsPySide2 or IsPySide):
+	                raise ImportError
+	            if QCoreApplication.instance() is None:
+	              self.app = QtWidgets.QApplication(sys.argv)
+	            qt5reactor.install()
+	            if isMacOS():
+	                import appnope
+	                appnope.nope()
             except ImportError:
                 print getMessage("unable-import-gui-error")
                 self._config['noGui'] = True
