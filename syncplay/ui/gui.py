@@ -1371,10 +1371,10 @@ class MainWindow(QtWidgets.QMainWindow):
         window.outputLayout.addWidget(window.playbackFrame)
         
     def addSkipLayout(self, window):
-        window.skipFrame = QtGui.QFrame()
+        window.skipFrame = QtWidgets.QFrame()
         window.skipFrame.setVisible(False)
         window.skipFrame.setContentsMargins(0,0,0,0)
-        window.skipLayout = QtGui.QHBoxLayout()
+        window.skipLayout = QtWidgets.QHBoxLayout()
         window.skipLayout.setAlignment(Qt.AlignLeft)
         window.skipLayout.setContentsMargins(0,0,0,0)
         window.skipFrame.setLayout(window.skipLayout)
@@ -1382,36 +1382,36 @@ class MainWindow(QtWidgets.QMainWindow):
         skipFont = QtGui.QFont()
         skipFont.setWeight(QtGui.QFont.Bold)
         
-        window.skipRecapPushButton = QtGui.QPushButton()
+        window.skipRecapPushButton = QtWidgets.QPushButton()
 	window.skipRecapPushButton.setText(getMessage("skip-guirecapbuttonlabel"))
         window.skipRecapPushButton.setCheckable(True)
         window.skipRecapPushButton.setAutoExclusive(False)
         window.skipRecapPushButton.toggled.connect(self.changeSkipRecapState)
         window.skipRecapPushButton.setFont(skipFont)
         window.skipRecapPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
-        window.skipRecapPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipRecapPushButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         window.skipRecapPushButton.setToolTip(getMessage("skip-recap-tooltip"))
         window.skipLayout.addWidget(window.skipRecapPushButton)
         
-        window.skipOPPushButton = QtGui.QPushButton()
+        window.skipOPPushButton = QtWidgets.QPushButton()
 	window.skipOPPushButton.setText(getMessage("skip-guiopbuttonlabel"))
         window.skipOPPushButton.setCheckable(True)
         window.skipOPPushButton.setAutoExclusive(False)
         window.skipOPPushButton.toggled.connect(self.changeSkipOPState)
         window.skipOPPushButton.setFont(skipFont)
         window.skipOPPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
-        window.skipOPPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipOPPushButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         window.skipOPPushButton.setToolTip(getMessage("skip-op-tooltip"))
         window.skipLayout.addWidget(window.skipOPPushButton)
 
-        window.skipPreviewPushButton = QtGui.QPushButton()
+        window.skipPreviewPushButton = QtWidgets.QPushButton()
 	window.skipPreviewPushButton.setText(getMessage("skip-guipreviewbuttonlabel"))
         window.skipPreviewPushButton.setCheckable(True)
         window.skipPreviewPushButton.setAutoExclusive(False)
         window.skipPreviewPushButton.toggled.connect(self.changeSkipPreviewState)
         window.skipPreviewPushButton.setFont(skipFont)
         window.skipPreviewPushButton.setStyleSheet(constants.STYLE_SKIP_PUSHBUTTON)
-        window.skipPreviewPushButton.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        window.skipPreviewPushButton.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         window.skipPreviewPushButton.setToolTip(getMessage("skip-preview-tooltip"))
         window.skipLayout.addWidget(window.skipPreviewPushButton)
         
@@ -1662,23 +1662,23 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateSkipOPIcon(self):
         ready = self.skipOPPushButton.isChecked()
         if ready:
-            self.skipOPPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'tick_checkbox.png'))
+            self.skipOPPushButton.setIcon(QtGui.QPixmap(resourcespath + 'tick_checkbox.png'))
         else:
-            self.skipOPPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'empty_checkbox.png'))
+            self.skipOPPushButton.setIcon(QtGui.QPixmap(resourcespath + 'empty_checkbox.png'))
 
     def updateSkipPreviewIcon(self):
         ready = self.skipPreviewPushButton.isChecked()
         if ready:
-            self.skipPreviewPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'tick_checkbox.png'))
+            self.skipPreviewPushButton.setIcon(QtGui.QPixmap(resourcespath + 'tick_checkbox.png'))
         else:
-            self.skipPreviewPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'empty_checkbox.png'))
+            self.skipPreviewPushButton.setIcon(QtGui.QPixmap(resourcespath + 'empty_checkbox.png'))
             
     def updateSkipRecapIcon(self):
         ready = self.skipRecapPushButton.isChecked()
         if ready:
-            self.skipRecapPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'tick_checkbox.png'))
+            self.skipRecapPushButton.setIcon(QtGui.QPixmap(resourcespath + 'tick_checkbox.png'))
         else:
-            self.skipRecapPushButton.setIcon(QtGui.QPixmap(self.resourcespath + 'empty_checkbox.png'))
+            self.skipRecapPushButton.setIcon(QtGui.QPixmap(resourcespath + 'empty_checkbox.png'))
             
     def automaticUpdateCheck(self):
         currentDateTimeValue = QDateTime.currentDateTime()
