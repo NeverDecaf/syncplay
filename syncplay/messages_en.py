@@ -17,23 +17,23 @@ en = {
     "connected-successful-notification" : "Successfully connected to server",
     "retrying-notification" : "%s, Retrying in %d seconds...",  # Seconds
 
-    "rewind-notification" : "Rewinded due to time difference with <{}>",  # User
-    "fastforward-notification" : "Fast-forwarded due to time difference with <{}>",  # User
-    "slowdown-notification" : "Slowing down due to time difference with <{}>",  # User
+    "rewind-notification" : "Rewinded due to time difference with {}",  # User
+    "fastforward-notification" : "Fast-forwarded due to time difference with {}",  # User
+    "slowdown-notification" : "Slowing down due to time difference with {}",  # User
     "revert-notification" : "Reverting speed back to normal",
 
-    "pause-notification" : u"<{}> paused",  # User
-    "unpause-notification" : u"<{}> unpaused",  # User
-    "seek-notification" : u"<{}> jumped from {} to {}",  # User, from time, to time
+    "pause-notification" : u"{} paused",  # User
+    "unpause-notification" : u"{} unpaused",  # User
+    "seek-notification" : u"{} jumped from {} to {}",  # User, from time, to time
 
     "current-offset-notification" : "Current offset: {} seconds",  # Offset
 
     "media-directory-list-updated-notification" : u"Syncplay media directories have been updated.",
 
-    "room-join-notification" : u"<{}> has joined the room: '{}'",  # User
-    "left-notification" : u"<{}> has left",  # User
-    "left-paused-notification" : u"<{}> left, <{}> paused",  # User who left, User who paused
-    "playing-notification" : u"<{}> is playing '{}' ({})",  # User, file, duration
+    "room-join-notification" : u"{} has joined the room: '{}'",  # User
+    "left-notification" : u"{} has left",  # User
+    "left-paused-notification" : u"{} left, {} paused",  # User who left, User who paused
+    "playing-notification" : u"{} is playing '{}' ({})",  # User, file, duration
     "playing-notification/room-addendum" :  u" in room: '{}'",  # Room
 
     "not-all-ready" : u"Not ready: {}", # Usernames
@@ -44,11 +44,11 @@ en = {
     "autoplaying-notification" : u"Auto-playing in {}...",  # Number of seconds until playback will start
 
     "identifying-as-controller-notification" : u"Identifying as room operator with password '{}'...",
-    "failed-to-identify-as-controller-notification" : u"<{}> failed to identify as a room operator.",
-    "authenticated-as-controller-notification" : u"<{}> authenticated as a room operator",
+    "failed-to-identify-as-controller-notification" : u"{} failed to identify as a room operator.",
+    "authenticated-as-controller-notification" : u"{} authenticated as a room operator",
     "created-controlled-room-notification" : u"Created managed room '{}' with password '{}'. Please save this information for future reference!", # RoomName, operatorPassword
 
-    "file-different-notification" : "File you are playing appears to be different from <{}>'s",  # User
+    "file-different-notification" : "File you are playing appears to be different from {}'s",  # User
     "file-differences-notification" : u"Your file differs in the following way(s): {}", # Differences
     "room-file-differences" : u"File differences: {}", # File differences (filename, size, and/or duration)
     "file-difference-filename" : u"name",
@@ -127,13 +127,18 @@ en = {
     "empty-value-config-error" : "{} can't be empty", # Config option
 
     "not-json-error" : "Not a json encoded string\n",
-    "hello-arguments-error" : "Not enough Hello arguments\n",
+    "hello-arguments-error" : "Not enough Hello arguments\n", # DO NOT TRANSLATE
     "version-mismatch-error" : "Mismatch between versions of client and server\n",
     "vlc-failed-connection": "Failed to connect to VLC. If you have not installed syncplay.lua and are using the latest verion of VLC then please refer to http://syncplay.pl/LUA/ for instructions.",
     "vlc-failed-noscript": "VLC has reported that the syncplay.lua interface script has not been installed. Please refer to http://syncplay.pl/LUA/ for instructions.",
     "vlc-failed-versioncheck": "This version of VLC is not supported by Syncplay.",
 
-    "not-supported-by-server-error" : "This feature is not supported by the server. The feature requires a server running Syncplay {}+, but the server is running Syncplay {}.", #minVersion, serverVersion
+    "feature-sharedPlaylists" : u"shared playlists", # used for not-supported-by-server-error
+    "feature-chat" : u"chat", # used for not-supported-by-server-error
+    "feature-readiness" : u"readiness", # used for not-supported-by-server-error
+    "feature-managedRooms" : u"managed rooms", # used for not-supported-by-server-error
+
+    "not-supported-by-server-error" : u"The {} feature is not supported by this server..", #feature
     "shared-playlists-not-supported-by-server-error" : "The shared playlists feature may not be supported by the server. To ensure that it works correctly requires a server running Syncplay  {}+, but the server is running Syncplay {}.", #minVersion, serverVersion
     "shared-playlists-disabled-by-server-error" : "The shared playlist feature has been disabled in the server configuration. To use this feature you will need to connect to a different server.",
 
@@ -226,6 +231,7 @@ en = {
     "messages-label" : "Messages",
     "messages-osd-title" : "On-screen Display settings",
     "messages-other-title" : "Other display settings",
+    "chat-label" : u"Chat",
     "privacy-label" : "Privacy", # Currently unused, but will be brought back if more space is needed in Misc tab
     "privacy-title" : "Privacy settings",
     "unpause-title" : u"If you press play, set as ready and:",
@@ -234,6 +240,28 @@ en = {
     "unpause-ifminusersready-option" : u"Unpause if already ready or if all others ready and min users ready",
     "unpause-always" : u"Always unpause",
     "syncplay-trusteddomains-title": u"Trusted domains (for streaming services and hosted content)",
+
+    "chat-title" : u"Chat message input",
+    "chatinputenabled-label" : u"Enable chat input via mpv",
+    "chatdirectinput-label" : u"Allow instant chat input (bypass having to press enter key to chat)",
+    "chatinputfont-label" : u"Chat input font",
+    "chatfont-label" : u"Set font",
+    "chatcolour-label" : u"Set colour",
+    "chatinputposition-label" : u"Position of message input area in mpv",
+    "chat-top-option" : u"Top",
+    "chat-middle-option" : u"Middle",
+    "chat-bottom-option" : u"Bottom",
+    "chatoutputheader-label" : u"Chat message output",
+    "chatoutputfont-label": u"Chat output font",
+    "chatoutputenabled-label": u"Enable chat output in media player (mpv only for now)",
+    "chatoutputposition-label": u"Output mode",
+    "chat-chatroom-option": u"Chatroom style",
+    "chat-scrolling-option": u"Scrolling style",
+
+    "mpv-key-tab-hint": u"[TAB] to toggle access to alphabet row key shortcuts.",
+    "mpv-key-hint": u"[ENTER] to send message. [ESC] to escape chat mode.",
+    "alphakey-mode-warning-first-line": u"You can temporarily use old mpv bindings with a-z keys.",
+    "alphakey-mode-warning-second-line": u"Press [TAB] to return to Syncplay chat mode.",
 
     "help-label" : "Help",
     "reset-label" : "Restore defaults",
@@ -288,7 +316,7 @@ en = {
     "help-menu-label" : "&Help",
     "userguide-menu-label" : "Open user &guide",
     "update-menu-label" : "Check for &update",
-    
+
     #About dialog
     "about-menu-label": u"&About Syncplay",
     "about-dialog-title": u"About Syncplay",
@@ -361,6 +389,22 @@ en = {
     "unpause-ifminusersready-tooltip" : u"If you press unpause when not ready, it will only unpause if others are ready and minimum users threshold is met.",
     "trusteddomains-arguments-tooltip" : u"Domains that it is okay for Syncplay to automatically switch to when shared playlists is enabled.",
 
+    "chatinputenabled-tooltip" : u"Enable chat input in mpv (press enter to chat, enter to send, escape to cancel)",
+    "chatdirectinput-tooltip" : u"Skip having to press 'enter' to go into chat input mode in mpv. Press TAB in mpv to temporarily disable this feature.",
+    "font-label-tooltip" : u"Font used for when entering chat messages in mpv. Client-side only, so doesn't affect what other see.",
+    "set-input-font-tooltip" : u"Font family used for when entering chat messages in mpv. Client-side only, so doesn't affect what other see.",
+    "set-input-colour-tooltip" : u"Font colour used for when entering chat messages in mpv. Client-side only, so doesn't affect what other see.",
+    "chatinputposition-tooltip" : u"Location in mpv where chat input text will appear when you press enter and type.",
+    "chatinputposition-top-tooltip" : u"Place chat input at top of mpv window.",
+    "chatinputposition-middle-tooltip" : u"Place chat input in dead centre of mpv window.",
+    "chatinputposition-bottom-tooltip" : u"Place chat input at bottom of mpv window.",
+    "chatoutputenabled-tooltip": u"Show chat messages in OSD (if supported by media player).",
+    "font-output-label-tooltip": u"Chat output font.",
+    "set-output-font-tooltip": u"Font used for when displaying chat messages.",
+    "chatoutputmode-tooltip": u"How chat messages are displayed.",
+    "chatoutputmode-chatroom-tooltip": u"Display new lines of chat directly below previous line.",
+    "chatoutputmode-scrolling-tooltip": u"Scroll chat text from right to left.",
+
     "help-tooltip" : "Opens the Syncplay.pl user guide.",
     "reset-tooltip" : "Reset all settings to the default configuration.",
     "update-server-list-tooltip" : u"Connect to syncplay.pl to update list of public servers.",
@@ -401,6 +445,8 @@ en = {
     "server-disable-ready-argument" : u"disable readiness feature",
     "server-motd-argument": "path to file from which motd will be fetched",
     "server-chat-argument" : "Should chat be disabled?",
+    "server-chat-maxchars-argument" : u"Maximum number of characters in a chat message (default is {})", # Default number of characters
+    "server-maxusernamelength-argument" : u"Maximum number of charactrs in a username (default is {})",
     "server-messed-up-motd-unescaped-placeholders": "Message of the Day has unescaped placeholders. All $ signs should be doubled ($$).",
     "server-messed-up-motd-too-long": u"Message of the Day is too long - maximum of {} chars, {} given.",
 
@@ -411,7 +457,7 @@ en = {
     "client-drop-server-error" : u"Client drop: {} -- {}",  # host, error
     "password-required-server-error" : "Password required",
     "wrong-password-server-error" : "Wrong password supplied",
-    "hello-server-error" : "Not enough Hello arguments",
+    "hello-server-error" : "Not enough Hello arguments", #DO NOT TRANSLATE
 
     # Playlists
     "playlist-selection-changed-notification" :  u"{} changed the playlist selection", # Username

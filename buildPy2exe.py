@@ -57,6 +57,7 @@ NSIS_SCRIPT_TEMPLATE = r"""
   LoadLanguageFile "$${NSISDIR}\Contrib\Language files\Polish.nlf"
   LoadLanguageFile "$${NSISDIR}\Contrib\Language files\Russian.nlf"
   LoadLanguageFile "$${NSISDIR}\Contrib\Language files\German.nlf"
+  LoadLanguageFile "$${NSISDIR}\Contrib\Language files\Italian.nlf"
 
   Unicode true
 
@@ -83,6 +84,11 @@ NSIS_SCRIPT_TEMPLATE = r"""
   VIAddVersionKey /LANG=$${LANG_RUSSIAN} "FileVersion" "$version.0"
   VIAddVersionKey /LANG=$${LANG_RUSSIAN} "LegalCopyright" "Syncplay"
   VIAddVersionKey /LANG=$${LANG_RUSSIAN} "FileDescription" "Syncplay"
+  
+  VIAddVersionKey /LANG=$${LANG_ITALIAN} "ProductName" "Syncplay"
+  VIAddVersionKey /LANG=$${LANG_ITALIAN} "FileVersion" "$version.0"
+  VIAddVersionKey /LANG=$${LANG_ITALIAN} "LegalCopyright" "Syncplay"
+  VIAddVersionKey /LANG=$${LANG_ITALIAN} "FileDescription" "Syncplay"
 
   LangString ^SyncplayLanguage $${LANG_ENGLISH} "en"
   LangString ^Associate $${LANG_ENGLISH} "Associate Syncplay with multimedia files."
@@ -126,6 +132,17 @@ NSIS_SCRIPT_TEMPLATE = r"""
   LangString ^QuickLaunchBar $${LANG_GERMAN} "Schnellstartleiste"
   LangString ^AutomaticUpdates $${LANG_GERMAN} "Automatisch nach Updates suchen";
   LangString ^UninstConfig $${LANG_GERMAN} "Konfigurationsdatei löschen."
+  
+  LangString ^SyncplayLanguage $${LANG_ITALIAN} "it"
+  LangString ^Associate $${LANG_ITALIAN} "Associa Syncplay con i file multimediali."
+  LangString ^VLC $${LANG_ITALIAN} "Installa l'interfaccia di Syncplay per VLC 2+"
+  LangString ^BrowseVLCBtn $${LANG_ITALIAN} "Cartella di VLC"
+  LangString ^Shortcut $${LANG_ITALIAN} "Crea i collegamenti nei percorsi seguenti:"
+  LangString ^StartMenu $${LANG_ITALIAN} "Menu Start"
+  LangString ^Desktop $${LANG_ITALIAN} "Desktop"
+  LangString ^QuickLaunchBar $${LANG_ITALIAN} "Barra di avvio rapido"
+  LangString ^AutomaticUpdates $${LANG_ITALIAN} "Controllo automatico degli aggiornamenti"
+  LangString ^UninstConfig $${LANG_ITALIAN} "Cancella i file di configurazione."
 
   ; Remove text to save space
   LangString ^ClickInstall $${LANG_GERMAN} " "
@@ -233,6 +250,8 @@ NSIS_SCRIPT_TEMPLATE = r"""
     Push Русский
     Push $${LANG_GERMAN}
     Push Deutsch
+	Push $${LANG_ITALIAN}
+    Push Italiano
     Push A ; A means auto count languages
     LangDLL::LangDialog "Language Selection" "Please select the language of Syncplay and the installer"
     Pop $$LANGUAGE
@@ -671,6 +690,8 @@ guiIcons = ['resources/accept.png', 'resources/arrow_undo.png', 'resources/clock
      'resources/tick.png', 'resources/lock_open.png', 'resources/empty_checkbox.png', 'resources/tick_checkbox.png',
      'resources/world_explore.png', 'resources/application_get.png', 'resources/cog.png', 'resources/arrow_switch.png',
      'resources/film_go.png', 'resources/world_go.png', 'resources/arrow_refresh.png', 'resources/bullet_right_grey.png',
+     'resources/user_comment.png',
+     'resources/error.png',
      'resources/film_folder_edit.png',
      'resources/film_edit.png',
      'resources/folder_film.png',
@@ -679,7 +700,8 @@ guiIcons = ['resources/accept.png', 'resources/arrow_undo.png', 'resources/clock
      'resources/email_go.png',
      'resources/world_add.png', 'resources/film_add.png', 'resources/delete.png', 'resources/spinner.mng'
     ]
-resources = ["resources/icon.ico", "resources/syncplay.png", "resources/license.rtf", "resources/third-party-notices.rtf", "resources/cacert.pem"]
+resources = ["resources/icon.ico", "resources/syncplay.png", "resources/syncplayintf.lua", "resources/license.rtf", "resources/third-party-notices.rtf"]
+resources.append("resources/cacert.pem")
 resources.extend(guiIcons)
 intf_resources = ["resources/lua/intf/syncplay.lua"]
 
