@@ -298,6 +298,8 @@ class SyncplayClient(object):
                 thread.start()
             except:
                 self.discordClient = None
+        else:
+            self.discordClient = None
 
         if constants.LIST_RELATIVE_CONFIGS and self._config.has_key('loadedRelativePaths') and self._config['loadedRelativePaths']:
             paths = "; ".join(self._config['loadedRelativePaths'])
