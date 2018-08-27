@@ -182,7 +182,6 @@ en = {
     "name-label":  "Username (optional):",
     "password-label":  "Server password (if any):",
     "room-label": "Default room: ",
-    "discord-label": "Discord token (optional):",
 
     "media-setting-title": "Media player settings",
     "executable-path-label": "Path to media player:",
@@ -200,6 +199,7 @@ en = {
     "filename-privacy-label": "Filename information:",
     "filesize-privacy-label": "File size information:",
     "checkforupdatesautomatically-label": "Check for Syncplay updates automatically",
+    "discordrpc-label": "Enable Discord rich presence",
     "slowondesync-label": "Slow down on minor desync (not supported on MPC-HC/BE)",
     "rewindondesync-label": "Rewind on major desync (recommended)",
     "fastforwardondesync-label": "Fast-forward if lagging behind (recommended)",
@@ -354,7 +354,6 @@ en = {
     "name-tooltip": "Nickname you will be known by. No registration, so can easily change later. Random name generated if none specified.",
     "password-tooltip": "Passwords are only needed for connecting to private servers.",
     "room-tooltip": "Room to join upon connection can be almost anything, but you will only be synchronised with people in the same room.",
-    "discordtoken-tooltip": "If provided, will update your discord status to match the file you are watching.",
 
     "executable-path-tooltip": "Location of your chosen supported media player (mpv, VLC, MPC-HC/BE or mplayer2).",
     "media-path-tooltip": "Location of video or stream to be opened. Necessary for mplayer2.",
@@ -368,6 +367,7 @@ en = {
     "privacy-sendhashed-tooltip": "Send a hashed version of the information, making it less visible to other clients.",
     "privacy-dontsend-tooltip": "Do not send this information to the server. This provides for maximum privacy.",
     "checkforupdatesautomatically-tooltip": "Regularly check with the Syncplay website to see whether a new version of Syncplay is available.",
+    "discordrpc-tooltip": "Display your currently watched file as status in discord.",
     "slowondesync-tooltip": "Reduce playback rate temporarily when needed to bring you back in sync with other viewers. Not supported on MPC-HC/BE.",
     "dontslowdownwithme-tooltip": "Means others do not get slowed down or rewinded if your playback is lagging. Useful for room operators.",
     "pauseonleave-tooltip": "Pause playback if you get disconnected or someone leaves from your room.",

@@ -30,7 +30,7 @@ class ConfigurationGetter(object):
             "noStore": False,
             "room": "",
             "password": None,
-            "discordtoken": None,
+            "discordrpc": False,
             "playerPath": None,
             "perPlayerArguments": None,
             "mediaSearchDirectories": None,
@@ -132,6 +132,7 @@ class ConfigurationGetter(object):
             "showSameRoomOSD",
             "showNonControllerOSD",
             "showDurationNotification",
+            "discordrpc",
             "sharedPlaylistEnabled",
             "loopAtEndOfPlaylist",
             "loopSingleFiles",
@@ -181,7 +182,7 @@ class ConfigurationGetter(object):
         self._iniStructure = {
             "server_data": ["host", "port", "password"],
             "client_settings": [
-                "name", "room", "discordtoken", "playerPath",
+                "name", "room", "playerPath",
                 "perPlayerArguments", "slowdownThreshold",
                 "rewindThreshold", "fastforwardThreshold",
                 "slowOnDesync", "rewindOnDesync",
@@ -211,7 +212,7 @@ class ConfigurationGetter(object):
                 "chatTimeout", "chatOutputEnabled"],
             "general": [
                 "language", "checkForUpdatesAutomatically",
-                "lastCheckedForUpdates"]
+                "lastCheckedForUpdates", "discordrpc"]
         }
 
         self._playerFactory = PlayerFactory()

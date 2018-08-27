@@ -1439,7 +1439,7 @@ class MainWindow(QtWidgets.QMainWindow):
         skipFont.setWeight(QtGui.QFont.Bold)
         
         window.skipRecapPushButton = QtWidgets.QPushButton()
-	window.skipRecapPushButton.setText(getMessage("skip-guirecapbuttonlabel"))
+        window.skipRecapPushButton.setText(getMessage("skip-guirecapbuttonlabel"))
         window.skipRecapPushButton.setCheckable(True)
         window.skipRecapPushButton.setAutoExclusive(False)
         window.skipRecapPushButton.toggled.connect(self.changeSkipRecapState)
@@ -1450,7 +1450,7 @@ class MainWindow(QtWidgets.QMainWindow):
         window.skipLayout.addWidget(window.skipRecapPushButton)
         
         window.skipOPPushButton = QtWidgets.QPushButton()
-	window.skipOPPushButton.setText(getMessage("skip-guiopbuttonlabel"))
+        window.skipOPPushButton.setText(getMessage("skip-guiopbuttonlabel"))
         window.skipOPPushButton.setCheckable(True)
         window.skipOPPushButton.setAutoExclusive(False)
         window.skipOPPushButton.toggled.connect(self.changeSkipOPState)
@@ -1461,7 +1461,7 @@ class MainWindow(QtWidgets.QMainWindow):
         window.skipLayout.addWidget(window.skipOPPushButton)
 
         window.skipPreviewPushButton = QtWidgets.QPushButton()
-	window.skipPreviewPushButton.setText(getMessage("skip-guipreviewbuttonlabel"))
+        window.skipPreviewPushButton.setText(getMessage("skip-guipreviewbuttonlabel"))
         window.skipPreviewPushButton.setCheckable(True)
         window.skipPreviewPushButton.setAutoExclusive(False)
         window.skipPreviewPushButton.toggled.connect(self.changeSkipPreviewState)

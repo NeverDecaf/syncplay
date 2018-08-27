@@ -280,6 +280,7 @@ TRUSTABLE_WEB_PROTOCOLS = ["http://www.", "https://www.", "http://", "https://"]
 PRIVATE_FILE_FIELDS = ["path"]
 
 DISCORD_MIN_UPDATE_TIME = 15
+DISCORD_APP_ID = "483706873330270218"
 OS_WINDOWS = "win"
 OS_LINUX = "linux"
 OS_MACOS = "darwin"

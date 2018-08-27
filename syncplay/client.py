@@ -17,20 +17,12 @@ from twisted.internet import reactor, task, defer, threads
 from syncplay import utils, constants, version
 from syncplay.constants import PRIVACY_SENDHASHED_MODE, PRIVACY_DONTSEND_MODE, \
     PRIVACY_HIDDENFILENAME
-<<<<<<< HEAD
-import collections
-import subprocess as sp
-import requests
-import zlib
-import threading
-import json
-from ws4py.client import WebSocketBaseClient
-=======
 from syncplay.messages import getMissingStrings, getMessage
 from syncplay.protocols import SyncClientProtocol
 from syncplay.utils import isMacOS
 
->>>>>>> upstream/master
+from pypresence import Presence
+import subprocess
 
 class SyncClientFactory(ClientFactory):
     def __init__(self, client, retry=constants.RECONNECT_RETRIES):
@@ -73,10 +65,6 @@ class SyncClientFactory(ClientFactory):
     def stopRetrying(self):
         self._timesTried = self.retry
         
-class ResumeWebSocket(Exception):
-    """Signals to initialise via RESUME opcode instead of IDENTIFY."""
-    'you havent actually implemented this yet, needs to be done.'
-    pass
 class KeepAliveHandler(threading.Thread):
     def __init__(self, seconds, socket, **kwargs):
         threading.Thread.__init__(self, **kwargs)
@@ -94,137 +82,18 @@ class KeepAliveHandler(threading.Thread):
             msg = 'Keeping websocket alive with timestamp {0}'
             self.socket.send(json.dumps(payload, separators=(',', ':')))
             
-class WebSocket(WebSocketBaseClient):
-    def __init__(self, url, token):
-        WebSocketBaseClient.__init__(self, url,
-                                     protocols=['http-only', 'chat'])
-        self.keep_alive = None
-        self.token = token
-        self.initial_status = u'online'
+class DiscordPresence:
+    def __init__(self):
+        self.RPC = Presence(constants.DISCORD_APP_ID)
+        self.RPC.connect()
 
-    def opened(self):
-        pass
-
-    def closed(self, code, reason=None):
-        if self.keep_alive is not None:
-            self.keep_alive.stop.set()
-
-    def handshake_ok(self):
-        pass
-
-    def send(self, payload, binary=False):
-        WebSocketBaseClient.send(self, payload, binary)
-
-    def received_message(self, msg):
-        if msg.is_binary:
-            msg = zlib.decompress(msg.data, 15, 10490000)
-            if sys.version_info[0] == 2:
-                msg = str(msg).decode('utf-8')
-            else:
-                msg = msg.decode('utf-8')
-            response = json.loads(msg)
-        else:
-            response = json.loads(str(msg))
-            
-        op = response.get('op')
-        data = response.get('d')
-        if op == 7: #RECONNECT
-            # "reconnect" can only be handled by the Client
-            # so we terminate our connection and raise an
-            # internal exception signalling to reconnect.
-            self.close()
-            raise ResumeWebsocket()
-        if op==10: # HELLO
-            interval = data['heartbeat_interval'] / 1000.0
-            self.keep_alive = KeepAliveHandler(interval, self)
-            self.keep_alive.start()
-            payload = {
-            'op': 2,
-            'd': {
-                'token': self.token,
-                'properties': {
-                    '$os': sys.platform,
-                    '$browser': 'syncplay',
-                    '$device': 'syncplay',
-                    '$referrer': '',
-                    '$referring_domain': ''
-                },
-                'compress': True,
-                'large_threshold': 50,
-                'v': 3,
-            }
-            }
-            self.send(json.dumps(payload, separators=(',', ':')))
-        if op==11: # HEARTBEAT ACK
-            pass
-        if op==0 and response.get('t')=='READY':
-            try:
-                self.initial_status = data[u'user_settings'][u'status']
-            except:
-                pass
-        
-    def close(self, code=1000, reason=''):
-        payload = {
-            'op': 3,
-            'd': {
-                'token': self.token,
-                'game': {'name':None},
-                'afk': False,
-                'since': int(time.time() * 1000),
-                'status': self.initial_status,
-            }
-        }
-        self.send(json.dumps(payload, separators=(',', ':')))
-        super(WebSocketBaseClient,self).close(code,reason)
-
-class MiniDiscord:
-    def __init__(self, token):
-        self.token = token.strip('"')
-        self._close = False
-        os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(utils.findWorkingDir(), "resources/cacert.pem")
-        g = requests.get('https://discordapp.com/api/gateway',headers={'authorization':self.token})
-        self.gateway = g.json().get('url')+'/?v=6&encoding=json'
-        self.ws = WebSocket(self.gateway, self.token)
-        self.is_connected = threading.Event()
-        
-    def start(self):
-        self.is_connected.clear()
-        self.ws = WebSocket(self.gateway, self.token)
-        self.ws.connect()
-        self.is_connected.set()
-        self.ws.run()
-        while not self._close:
-            self.ws.run()
-            self.is_connected.clear()
-                # The WebSocket is guaranteed to be terminated after ws.run().
-                # Check if we wanted it to close and reconnect if not.
-            if not self._close:
-                g = requests.get('https://discordapp.com/api/gateway',headers={'authorization':self.token})
-                self.gateway = g.json().get('url')+'/?v=6&encoding=json'
-                self.ws = WebSocket(dispatch,self.gateway)
-                self.ws.connect()
-                self.is_connected.set()
+    def updateGame(self, filename, time_remaining):
+        shortname = re.sub('\..{2,4}$','',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',filename))).strip()
+        self.RPC.update(details='Watching: {}'.format(shortname), end=time_remaining, instance=True, large_image="syncplay512")
 
     def close(self):
-        self._close = True
-        self.ws.close()
-
-    def updateGame(self,gamename):
-        if self.is_connected.wait(2):
-            gamename = re.sub('\..{2,4}$','',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',gamename))).strip()
-            data = {
-                'op': 3,
-                'd': {
-                    'token': self.token,
-                    'game': {'name':gamename,'type':3},
-                    'afk': False,
-                    'since': int(time.time() * 1000),
-                    'status': self.ws.initial_status,
-                }
-            }
-            self.ws.send(json.dumps(data, separators=(',', ':')))
-        else:
-            return None
+        self.RPC.clear()
+        self.RPC.close()
 
 
 class SyncplayClient(object):
@@ -301,15 +170,13 @@ class SyncplayClient(object):
         self.playlist = SyncplayPlaylist(self)
 
         self.lastDiscordUpdate = 0
-        if constants.LIST_RELATIVE_CONFIGS and self._config.has_key('discordtoken') and self._config['discordtoken']:
+        if 'discordrpc' in self._config and self._config['discordrpc']:
             try:
-                self.discordClient = MiniDiscord(self._config['discordtoken'])
-                thread=threading.Thread(target=self.discordClient.start)
-                thread.start()
+                self.discordPresence = DiscordPresence()
             except:
-                self.discordClient = None
+                self.discordPresence = None
         else:
-            self.discordClient = None
+            self.discordPresence = None
 
         if constants.LIST_RELATIVE_CONFIGS and 'loadedRelativePaths' in self._config and self._config['loadedRelativePaths']:
             paths = "; ".join(self._config['loadedRelativePaths'])
@@ -319,6 +186,7 @@ class SyncplayClient(object):
             missingStrings = getMissingStrings()
             if missingStrings is not None and missingStrings is not "":
                 self.ui.showDebugMessage("MISSING/UNUSED STRINGS DETECTED:\n{}".format(missingStrings))
+                
     def initProtocol(self, protocol):
         self._protocol = protocol
 
@@ -349,13 +217,16 @@ class SyncplayClient(object):
             return
         if self._player:
             self._player.askForStatus()
-            now = time.time()
-            if now - self.lastDiscordUpdate > constants.DISCORD_MIN_UPDATE_TIME:
-                try:
-                    self.lastDiscordUpdate = now
-                    self.discordClient.updateGame(self.userlist.currentUser.file["name"])
-                except:
-                    pass
+            if self.discordPresence:
+                now = time.time()
+                if now - self.lastDiscordUpdate > constants.DISCORD_MIN_UPDATE_TIME:
+                    try:
+                        self.lastDiscordUpdate = now
+                        if self.userlist.currentUser.file:
+                            self.discordPresence.updateGame(self.userlist.currentUser.file["name"],
+                                now + self.userlist.currentUser.file["duration"] - self._playerPosition)
+                    except:
+                        pass
         self.checkIfConnected()
 
     def checkIfConnected(self):
@@ -771,8 +642,8 @@ class SyncplayClient(object):
           # ffmpeg requires an output file and so it errors 
           # when it does not get one so we need to capture stderr, 
           # not stdout.
-            output = sp.check_output(command, stderr=sp.STDOUT, universal_newlines=True, shell=True)
-        except sp.CalledProcessError, e:
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
+        except subprocess.CalledProcessError as e:
             output = e.output
 
         for line in iter(output.splitlines()):
@@ -996,8 +867,10 @@ class SyncplayClient(object):
         if not self._running:
             return
         self._running = False
-        if self.discordClient:
-            self.discordClient.close()
+##        if self.discordClient:
+##            self.discordClient.close()
+        if self.discordPresence:
+            self.discordPresence.close()
         if self.protocolFactory:
             self.protocolFactory.stopRetrying()
         self.destroyProtocol()
