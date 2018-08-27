@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #coding:utf8
 
-import site, sys
+import sys
 
 # libpath
 
 try:
-    if (sys.version_info.major != 2) or (sys.version_info.minor < 7):
-        raise Exception("You must run Syncplay with Python 2.7!")
+    if (sys.version_info.major != 3) or (sys.version_info.minor < 4):
+        raise Exception("You must run Syncplay with Python 3.4 or newer!")
 except AttributeError:
     import warnings
-    warnings.warn("You must run Syncplay with Python 2.7!")
+    warnings.warn("You must run Syncplay with Python 3.4 or newer!")
 
 from twisted.internet import reactor
 
@@ -19,5 +19,17 @@ from syncplay.server import SyncFactory, ConfigurationGetter
 if __name__ == '__main__':
     argsGetter = ConfigurationGetter()
     args = argsGetter.getConfiguration()
-    reactor.listenTCP(int(args.port), SyncFactory(args.password, args.motd_file, args.isolate_rooms, args.salt, args.disable_ready,args.disable_chat, args.max_chat_message_length))
+    reactor.listenTCP(
+        int(args.port),
+        SyncFactory(
+            args.port,
+            args.password,
+            args.motd_file,
+            args.isolate_rooms,
+            args.salt,
+            args.disable_ready,
+            args.disable_chat,
+            args.max_chat_message_length,
+            args.max_username_length,
+            args.stats_db_file))
     reactor.run()

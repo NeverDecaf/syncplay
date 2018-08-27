@@ -1,96 +1,100 @@
-from ConfigParser import SafeConfigParser, DEFAULTSECT
+
 import argparse
+import ast
+import codecs
+import re
 import os
 import sys
-import ast
+from configparser import SafeConfigParser, DEFAULTSECT
+
 from syncplay import constants, utils, version, milestone
 from syncplay.messages import getMessage, setLanguage, isValidLanguage
 from syncplay.players.playerFactory import PlayerFactory
 from syncplay.utils import isMacOS
-import codecs
-import re
+
 
 class InvalidConfigValue(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+
 class ConfigurationGetter(object):
     def __init__(self):
         self._config = {
-                        "host": None,
-                        "port": constants.DEFAULT_PORT,
-                        "name": None,
-                        "debug": False,
-                        "forceGuiPrompt": True,
-                        "noGui": False,
-                        "noStore": False,
-                        "room": "",
-                        "password": None,
-                        "discordtoken": None,
-                        "playerPath": None,
-                        "perPlayerArguments": None,
-                        "mediaSearchDirectories": None,
-                        "sharedPlaylistEnabled": True,
-                        "loopAtEndOfPlaylist": False,
-                        "loopSingleFiles" : False,
-                        "onlySwitchToTrustedDomains": True,
-                        "trustedDomains": constants.DEFAULT_TRUSTED_DOMAINS,
-                        "file": None,
-                        "playerArgs": [],
-                        "playerClass": None,
-                        "slowdownThreshold": constants.DEFAULT_SLOWDOWN_KICKIN_THRESHOLD,
-                        "rewindThreshold": constants.DEFAULT_REWIND_THRESHOLD,
-                        "fastforwardThreshold": constants.DEFAULT_FASTFORWARD_THRESHOLD,
-                        "rewindOnDesync": True,
-                        "slowOnDesync": True,
-                        "fastforwardOnDesync": True,
-                        "dontSlowDownWithMe": False,
-                        "filenamePrivacyMode": constants.PRIVACY_SENDRAW_MODE,
-                        "filesizePrivacyMode": constants.PRIVACY_SENDRAW_MODE,
-                        "pauseOnLeave": False,
-                        "readyAtStart": False,
-                        "unpauseAction": constants.UNPAUSE_IFOTHERSREADY_MODE,
-                        "autoplayInitialState" : None,
-                        "autoplayMinUsers" : -1,
-                        "autoplayRequireSameFilenames": True,
-                        "clearGUIData": False,
-                        "language" : "",
-                        "checkForUpdatesAutomatically" : None,
-                        "lastCheckedForUpdates" : "",
-                        "resetConfig" : False,
-                        "showOSD" : True,
-                        "showOSDWarnings" : True,
-                        "showSlowdownOSD" : True,
-                        "showDifferentRoomOSD" : False,
-                        "showSameRoomOSD" : True,
-                        "showNonControllerOSD" : False,
-                        "showContactInfo" : True,
-                        "showDurationNotification" : True,
-                        "chatInputEnabled" : True,
-                        "chatInputFontFamily" : 'sans-serif',
-                        "chatInputRelativeFontSize" : constants.DEFAULT_CHAT_FONT_SIZE,
-                        "chatInputFontWeight" : constants.DEFAULT_CHAT_FONT_WEIGHT,
-                        "chatInputFontUnderline": False,
-                        "chatInputFontColor": constants.DEFAULT_CHAT_INPUT_FONT_COLOR,
-                        "chatInputPosition": constants.INPUT_POSITION_TOP,
-                        "chatDirectInput": False,
-                        "chatOutputEnabled": True,
-                        "chatOutputFontFamily": 'sans-serif',
-                        "chatOutputRelativeFontSize": constants.DEFAULT_CHAT_FONT_SIZE,
-                        "chatOutputFontWeight": constants.DEFAULT_CHAT_FONT_WEIGHT,
-                        "chatOutputFontUnderline": False,
-                        "chatOutputMode": constants.CHATROOM_MODE,
-                        "chatMaxLines": 7,
-                        "chatTopMargin": 25,
-                        "chatLeftMargin": 20,
-                        "chatBottomMargin": 30,
-                        "chatMoveOSD": True,
-                        "chatOSDMargin": 110,
-                        "notificationTimeout": 3,
-                        "alertTimeout": 5,
-                        "chatTimeout": 7,
-                        "publicServers" : []
-                        }
+            "host": None,
+            "port": constants.DEFAULT_PORT,
+            "name": None,
+            "debug": False,
+            "forceGuiPrompt": True,
+            "noGui": False,
+            "noStore": False,
+            "room": "",
+            "password": None,
+            "discordtoken": None,
+            "playerPath": None,
+            "perPlayerArguments": None,
+            "mediaSearchDirectories": None,
+            "sharedPlaylistEnabled": True,
+            "loopAtEndOfPlaylist": False,
+            "loopSingleFiles": False,
+            "onlySwitchToTrustedDomains": True,
+            "trustedDomains": constants.DEFAULT_TRUSTED_DOMAINS,
+            "file": None,
+            "playerArgs": [],
+            "playerClass": None,
+            "slowdownThreshold": constants.DEFAULT_SLOWDOWN_KICKIN_THRESHOLD,
+            "rewindThreshold": constants.DEFAULT_REWIND_THRESHOLD,
+            "fastforwardThreshold": constants.DEFAULT_FASTFORWARD_THRESHOLD,
+            "rewindOnDesync": True,
+            "slowOnDesync": True,
+            "fastforwardOnDesync": True,
+            "dontSlowDownWithMe": False,
+            "filenamePrivacyMode": constants.PRIVACY_SENDRAW_MODE,
+            "filesizePrivacyMode": constants.PRIVACY_SENDRAW_MODE,
+            "pauseOnLeave": False,
+            "readyAtStart": False,
+            "unpauseAction": constants.UNPAUSE_IFOTHERSREADY_MODE,
+            "autoplayInitialState": None,
+            "autoplayMinUsers": -1,
+            "autoplayRequireSameFilenames": True,
+            "clearGUIData": False,
+            "language": "",
+            "checkForUpdatesAutomatically": None,
+            "lastCheckedForUpdates": "",
+            "resetConfig": False,
+            "showOSD": True,
+            "showOSDWarnings": True,
+            "showSlowdownOSD": True,
+            "showDifferentRoomOSD": False,
+            "showSameRoomOSD": True,
+            "showNonControllerOSD": False,
+            "showContactInfo": True,
+            "showDurationNotification": True,
+            "chatInputEnabled": True,
+            "chatInputFontFamily": 'sans-serif',
+            "chatInputRelativeFontSize": constants.DEFAULT_CHAT_FONT_SIZE,
+            "chatInputFontWeight": constants.DEFAULT_CHAT_FONT_WEIGHT,
+            "chatInputFontUnderline": False,
+            "chatInputFontColor": constants.DEFAULT_CHAT_INPUT_FONT_COLOR,
+            "chatInputPosition": constants.INPUT_POSITION_TOP,
+            "chatDirectInput": False,
+            "chatOutputEnabled": True,
+            "chatOutputFontFamily": 'sans-serif',
+            "chatOutputRelativeFontSize": constants.DEFAULT_CHAT_FONT_SIZE,
+            "chatOutputFontWeight": constants.DEFAULT_CHAT_FONT_WEIGHT,
+            "chatOutputFontUnderline": False,
+            "chatOutputMode": constants.CHATROOM_MODE,
+            "chatMaxLines": 7,
+            "chatTopMargin": 25,
+            "chatLeftMargin": 20,
+            "chatBottomMargin": 30,
+            "chatMoveOSD": True,
+            "chatOSDMargin": 110,
+            "notificationTimeout": 3,
+            "alertTimeout": 5,
+            "chatTimeout": 7,
+            "publicServers": []
+        }
 
         self._defaultConfig = self._config.copy()
 
@@ -98,47 +102,47 @@ class ConfigurationGetter(object):
         # Custom validation in self._validateArguments
         #
         self._required = [
-                          "host",
-                          "port",
-                          "room",
-                          "playerPath",
-                          "playerClass",
-                         ]
+            "host",
+            "port",
+            "room",
+            "playerPath",
+            "playerClass",
+        ]
 
         self._boolean = [
-                         "debug",
-                         "forceGuiPrompt",
-                         "noGui",
-                         "noStore",
-                         "dontSlowDownWithMe",
-                         "pauseOnLeave",
-                         "readyAtStart",
-                         "autoplayRequireSameFilenames",
-                         "clearGUIData",
-                         "rewindOnDesync",
-                         "slowOnDesync",
-                         "fastforwardOnDesync",
-                         "pauseOnLeave",
-                         "clearGUIData",
-                         "resetConfig",
-                         "showOSD",
-                         "showOSDWarnings",
-                         "showSlowdownOSD",
-                         "showDifferentRoomOSD",
-                         "showSameRoomOSD",
-                         "showNonControllerOSD",
-                         "showDurationNotification",
-                         "sharedPlaylistEnabled",
-                         "loopAtEndOfPlaylist",
-                         "loopSingleFiles",
-                         "onlySwitchToTrustedDomains",
-                         "chatInputEnabled",
-                         "chatInputFontUnderline",
-                         "chatDirectInput",
-                         "chatMoveOSD",
-                        "chatOutputEnabled",
-                        "chatOutputFontUnderline"
-                        ]
+            "debug",
+            "forceGuiPrompt",
+            "noGui",
+            "noStore",
+            "dontSlowDownWithMe",
+            "pauseOnLeave",
+            "readyAtStart",
+            "autoplayRequireSameFilenames",
+            "clearGUIData",
+            "rewindOnDesync",
+            "slowOnDesync",
+            "fastforwardOnDesync",
+            "pauseOnLeave",
+            "clearGUIData",
+            "resetConfig",
+            "showOSD",
+            "showOSDWarnings",
+            "showSlowdownOSD",
+            "showDifferentRoomOSD",
+            "showSameRoomOSD",
+            "showNonControllerOSD",
+            "showDurationNotification",
+            "sharedPlaylistEnabled",
+            "loopAtEndOfPlaylist",
+            "loopSingleFiles",
+            "onlySwitchToTrustedDomains",
+            "chatInputEnabled",
+            "chatInputFontUnderline",
+            "chatDirectInput",
+            "chatMoveOSD",
+            "chatOutputEnabled",
+            "chatOutputFontUnderline"
+        ]
         self._tristate = [
             "checkForUpdatesAutomatically",
             "autoplayInitialState",
@@ -175,37 +179,40 @@ class ConfigurationGetter(object):
         ]
 
         self._iniStructure = {
-                        "server_data": ["host", "port", "password"],
-                        "client_settings": ["name", "room", "discordtoken", "playerPath",
-                            "perPlayerArguments", "slowdownThreshold",
-                            "rewindThreshold", "fastforwardThreshold",
-                            "slowOnDesync", "rewindOnDesync",
-                            "fastforwardOnDesync", "dontSlowDownWithMe",
-                            "forceGuiPrompt", "filenamePrivacyMode",
-                            "filesizePrivacyMode", "unpauseAction",
-                            "pauseOnLeave", "readyAtStart", "autoplayMinUsers",
-                            "autoplayInitialState", "mediaSearchDirectories",
-                            "sharedPlaylistEnabled", "loopAtEndOfPlaylist",
-                            "loopSingleFiles",
-                            "onlySwitchToTrustedDomains", "trustedDomains","publicServers"],
-                        "gui": ["showOSD", "showOSDWarnings", "showSlowdownOSD",
-                            "showDifferentRoomOSD", "showSameRoomOSD",
-                            "showNonControllerOSD", "showDurationNotification",
-                            "chatInputEnabled","chatInputFontUnderline",
-                            "chatInputFontFamily", "chatInputRelativeFontSize",
-                            "chatInputFontWeight", "chatInputFontColor",
-                            "chatInputPosition","chatDirectInput",
-                            "chatOutputFontFamily", "chatOutputRelativeFontSize",
-                            "chatOutputFontWeight", "chatOutputFontUnderline",
-                            "chatOutputMode", "chatMaxLines",
-                            "chatTopMargin", "chatLeftMargin",
-                            "chatBottomMargin", "chatDirectInput",
-                            "chatMoveOSD", "chatOSDMargin",
-                            "notificationTimeout", "alertTimeout",
-                            "chatTimeout","chatOutputEnabled"],
-                        "general": ["language", "checkForUpdatesAutomatically",
-                            "lastCheckedForUpdates"]
-                        }
+            "server_data": ["host", "port", "password"],
+            "client_settings": [
+                "name", "room", "discordtoken", "playerPath",
+                "perPlayerArguments", "slowdownThreshold",
+                "rewindThreshold", "fastforwardThreshold",
+                "slowOnDesync", "rewindOnDesync",
+                "fastforwardOnDesync", "dontSlowDownWithMe",
+                "forceGuiPrompt", "filenamePrivacyMode",
+                "filesizePrivacyMode", "unpauseAction",
+                "pauseOnLeave", "readyAtStart", "autoplayMinUsers",
+                "autoplayInitialState", "mediaSearchDirectories",
+                "sharedPlaylistEnabled", "loopAtEndOfPlaylist",
+                "loopSingleFiles",
+                "onlySwitchToTrustedDomains", "trustedDomains", "publicServers"],
+            "gui": [
+                "showOSD", "showOSDWarnings", "showSlowdownOSD",
+                "showDifferentRoomOSD", "showSameRoomOSD",
+                "showNonControllerOSD", "showDurationNotification",
+                "chatInputEnabled", "chatInputFontUnderline",
+                "chatInputFontFamily", "chatInputRelativeFontSize",
+                "chatInputFontWeight", "chatInputFontColor",
+                "chatInputPosition", "chatDirectInput",
+                "chatOutputFontFamily", "chatOutputRelativeFontSize",
+                "chatOutputFontWeight", "chatOutputFontUnderline",
+                "chatOutputMode", "chatMaxLines",
+                "chatTopMargin", "chatLeftMargin",
+                "chatBottomMargin", "chatDirectInput",
+                "chatMoveOSD", "chatOSDMargin",
+                "notificationTimeout", "alertTimeout",
+                "chatTimeout", "chatOutputEnabled"],
+            "general": [
+                "language", "checkForUpdatesAutomatically",
+                "lastCheckedForUpdates"]
+        }
 
         self._playerFactory = PlayerFactory()
 
@@ -216,7 +223,7 @@ class ConfigurationGetter(object):
             self._config = self._defaultConfig
             self._config['language'] = language
             self._config['checkForUpdatesAutomatically'] = checkForUpdatesAutomatically
-            raise InvalidConfigValue("*"+getMessage("config-cleared-notification"))
+            raise InvalidConfigValue("*" + getMessage("config-cleared-notification"))
 
         if not isValidLanguage(self._config['language']):
             self._config['language'] = ""
@@ -225,7 +232,7 @@ class ConfigurationGetter(object):
             try:
                 if varToTest == "" or varToTest is None:
                     return False
-                if str(varToTest).isdigit() == False:
+                if not str(varToTest).isdigit():
                     return False
                 varToTest = int(varToTest)
                 if varToTest > 65535 or varToTest < 1:
@@ -233,6 +240,7 @@ class ConfigurationGetter(object):
                 return True
             except:
                 return False
+
         for key in self._boolean:
             if self._config[key] == "True":
                 self._config[key] = True
@@ -242,7 +250,7 @@ class ConfigurationGetter(object):
         for key in self._serialised:
             if self._config[key] is None or self._config[key] == "":
                 self._config[key] = {}
-            elif isinstance(self._config[key], (str, unicode)):
+            elif isinstance(self._config[key], str):
                 self._config[key] = ast.literal_eval(self._config[key])
 
         for key in self._tristate:
@@ -259,7 +267,7 @@ class ConfigurationGetter(object):
         for key in self._hexadecimal:
             match = re.search(r'^#(?:[0-9a-fA-F]){6}$', self._config[key])
             if not match:
-                self._config[key] = u"#FFFFFF"
+                self._config[key] = "#FFFFFF"
 
         for key in self._required:
             if key == "playerPath":
@@ -270,7 +278,8 @@ class ConfigurationGetter(object):
                     self._config["playerClass"] = player
                 else:
                     raise InvalidConfigValue(getMessage("player-path-config-error"))
-                playerPathErrors = player.getPlayerPathErrors(self._config["playerPath"], self._config['file'] if self._config['file'] else None)
+                playerPathErrors = player.getPlayerPathErrors(
+                    self._config["playerPath"], self._config['file'] if self._config['file'] else None)
                 if playerPathErrors:
                     raise InvalidConfigValue(playerPathErrors)
             elif key == "host":
@@ -285,7 +294,7 @@ class ConfigurationGetter(object):
                 raise InvalidConfigValue(getMessage("empty-value-config-error").format(key.capitalize()))
 
     def _overrideConfigWithArgs(self, args):
-        for key, val in vars(args).items():
+        for key, val in list(vars(args).items()):
             if val:
                 if key == "force_gui_prompt":
                     key = "forceGuiPrompt"
@@ -323,31 +332,39 @@ class ConfigurationGetter(object):
 
     def _getConfigurationFilePath(self):
         configFile = self._checkForPortableFile()
-        if not configFile:
-            for name in constants.CONFIG_NAMES:
-                if configFile and os.path.isfile(configFile):
-                    break
-                if os.name <> 'nt':
-                    configFile = os.path.join(os.getenv('HOME', '.'), name)
-                else:
-                    configFile = os.path.join(os.getenv('APPDATA', '.'), name)
-            if configFile and not os.path.isfile(configFile):
-                if os.name <> 'nt':
-                    configFile = os.path.join(os.getenv('HOME', '.'), constants.DEFAULT_CONFIG_NAME_LINUX)
-                else:
-                    configFile = os.path.join(os.getenv('APPDATA', '.'), constants.DEFAULT_CONFIG_NAME_WINDOWS)
+        if configFile:
+            return configFile
+        for name in constants.CONFIG_NAMES:
+            configFile = self._expandConfigPath(name, xdg=False)
+            if os.path.isfile(configFile):
+                return configFile
+        return self._expandConfigPath()
 
-        return configFile
+    def _expandConfigPath(self, name=None, xdg=True):
+        if os.name != 'nt':
+            if xdg:
+                prefix = self._getXdgConfigHome()
+            else:
+                prefix = os.getenv('HOME', '.')
+        else:
+            prefix = os.getenv('APPDATA', '.')
+        return os.path.join(prefix, name or constants.DEFAULT_CONFIG_NAME)
+
+    def _getXdgConfigHome(self):
+        path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+        if not os.path.isdir(path):
+            os.mkdir(path, 0o755)
+        return path
 
     def _parseConfigFile(self, iniPath, createConfig=True):
-        parser = SafeConfigParserUnicode()
+        parser = SafeConfigParserUnicode(strict=False)
         if not os.path.isfile(iniPath):
             if createConfig:
                 open(iniPath, 'w').close()
             else:
                 return
         parser.readfp(codecs.open(iniPath, "r", "utf_8_sig"))
-        for section, options in self._iniStructure.items():
+        for section, options in list(self._iniStructure.items()):
             if parser.has_section(section):
                 for option in options:
                     if parser.has_option(section, option):
@@ -358,7 +375,7 @@ class ConfigurationGetter(object):
             self._validateArguments()
         except InvalidConfigValue as e:
             try:
-                for key, value in self._promptForMissingArguments(e.message).items():
+                for key, value in list(self._promptForMissingArguments(e).items()):
                     self._config[key] = value
                 self._checkConfig()
             except:
@@ -367,8 +384,8 @@ class ConfigurationGetter(object):
     def _promptForMissingArguments(self, error=None):
         if self._config['noGui']:
             if error:
-                print "{}!".format(error)
-            print getMessage("missing-arguments-error")
+                print("{}!".format(error))
+            print(getMessage("missing-arguments-error"))
             sys.exit()
         else:
             from syncplay.ui.GuiConfiguration import GuiConfiguration
@@ -379,7 +396,7 @@ class ConfigurationGetter(object):
 
     def __wasOptionChanged(self, parser, section, option):
         if parser.has_option(section, option):
-            if parser.get(section, option) != unicode(self._config[option]):
+            if parser.get(section, option) != str(self._config[option]):
                 return True
         else:
             return True
@@ -388,19 +405,18 @@ class ConfigurationGetter(object):
         changed = False
         if self._config['noStore']:
             return
-        parser = SafeConfigParserUnicode()
+        parser = SafeConfigParserUnicode(strict=False)
         parser.readfp(codecs.open(iniPath, "r", "utf_8_sig"))
-        for section, options in self._iniStructure.items():
+        for section, options in list(self._iniStructure.items()):
             if not parser.has_section(section):
                 parser.add_section(section)
                 changed = True
             for option in options:
                 if self.__wasOptionChanged(parser, section, option):
                     changed = True
-                parser.set(section, option, unicode(self._config[option]).replace('%', '%%'))
+                parser.set(section, option, str(self._config[option]).replace('%', '%%'))
         if changed:
             parser.write(codecs.open(iniPath, "wb", "utf_8_sig"))
-
 
     def _forceGuiPrompt(self):
         from syncplay.ui.GuiConfiguration import GuiConfiguration
@@ -410,7 +426,7 @@ class ConfigurationGetter(object):
             pass
 
         try:
-            for key, value in self._promptForMissingArguments().items():
+            for key, value in list(self._promptForMissingArguments().items()):
                 self._config[key] = value
         except GuiConfiguration.WindowClosed:
             sys.exit()
@@ -431,8 +447,8 @@ class ConfigurationGetter(object):
         for location in locations:
             for name in constants.CONFIG_NAMES:
                 path = location + os.path.sep + name
-                if os.path.isfile(path) and (os.name == 'nt' or path != os.path.join(os.getenv('HOME', '.'), constants.DEFAULT_CONFIG_NAME_LINUX)):
-                    loadedPaths.append(u"'{}'".format(os.path.normpath(path)))
+                if os.path.isfile(path) and (os.name == 'nt' or path != os.path.join(os.getenv('HOME', '.'), name)):
+                    loadedPaths.append("'{}'".format(os.path.normpath(path)))
                     self._parseConfigFile(path, createConfig=False)
                     self._checkConfig()
         return loadedPaths
@@ -445,8 +461,9 @@ class ConfigurationGetter(object):
         #
         if self._config['language']:
             setLanguage(self._config['language'])
-        self._argparser = argparse.ArgumentParser(description=getMessage("argument-description"),
-                                         epilog=getMessage("argument-epilog"))
+        self._argparser = argparse.ArgumentParser(
+            description=getMessage("argument-description"),
+            epilog=getMessage("argument-epilog"))
         self._argparser.add_argument('--no-gui', action='store_true', help=getMessage("nogui-argument"))
         self._argparser.add_argument('-a', '--host', metavar='hostname', type=str, help=getMessage("host-argument"))
         self._argparser.add_argument('-n', '--name', metavar='username', type=str, help=getMessage("name-argument"))
@@ -457,30 +474,30 @@ class ConfigurationGetter(object):
         self._argparser.add_argument('-p', '--password', metavar='password', type=str, nargs='?', help=getMessage("password-argument"))
         self._argparser.add_argument('--player-path', metavar='path', type=str, help=getMessage("player-path-argument"))
         self._argparser.add_argument('--language', metavar='language', type=str, help=getMessage("language-argument"))
-        self._argparser.add_argument('file', metavar='file', type=lambda s: unicode(s, 'utf8'), nargs='?', help=getMessage("file-argument"))
+        self._argparser.add_argument('file', metavar='file', type=lambda s: str(s, 'utf8'), nargs='?', help=getMessage("file-argument"))
         self._argparser.add_argument('--clear-gui-data', action='store_true', help=getMessage("clear-gui-data-argument"))
         self._argparser.add_argument('-v', '--version', action='store_true', help=getMessage("version-argument"))
         self._argparser.add_argument('_args', metavar='options', type=str, nargs='*', help=getMessage("args-argument"))
         args = self._argparser.parse_args()
         if args.version:
-            print getMessage("version-message").format(version, milestone)
+            print(getMessage("version-message").format(version, milestone))
             sys.exit()
         self._overrideConfigWithArgs(args)
         if not self._config['noGui']:
             try:
-	            from syncplay.vendor.Qt import QtWidgets, IsPySide, IsPySide2
-	            from syncplay.vendor.Qt.QtCore import QCoreApplication
-	            from syncplay.vendor import qt5reactor
-	            if not (IsPySide2 or IsPySide):
-	                raise ImportError
-	            if QCoreApplication.instance() is None:
-	              self.app = QtWidgets.QApplication(sys.argv)
-	            qt5reactor.install()
-	            if isMacOS():
-	                import appnope
-	                appnope.nope()
+                from syncplay.vendor.Qt import QtWidgets, IsPySide, IsPySide2
+                from syncplay.vendor.Qt.QtCore import QCoreApplication
+                from syncplay.vendor import qt5reactor
+                if not (IsPySide2 or IsPySide):
+                    raise ImportError
+                if QCoreApplication.instance() is None:
+                    self.app = QtWidgets.QApplication(sys.argv)
+                qt5reactor.install()
+                if isMacOS():
+                    import appnope
+                    appnope.nope()
             except ImportError:
-                print getMessage("unable-import-gui-error")
+                print(getMessage("unable-import-gui-error"))
                 self._config['noGui'] = True
         if self._config['file'] and self._config['file'][:2] == "--":
             self._config['playerArgs'].insert(0, self._config['file'])
@@ -507,20 +524,21 @@ class ConfigurationGetter(object):
         self._saveConfig(path)
         self._config = backup
 
+
 class SafeConfigParserUnicode(SafeConfigParser):
     def write(self, fp):
         """Write an .ini-format representation of the configuration state."""
         if self._defaults:
             fp.write("[%s]\n" % DEFAULTSECT)
-            for (key, value) in self._defaults.items():
+            for (key, value) in list(self._defaults.items()):
                 fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
             fp.write("\n")
         for section in self._sections:
             fp.write("[%s]\n" % section)
-            for (key, value) in self._sections[section].items():
+            for (key, value) in list(self._sections[section].items()):
                 if key == "__name__":
                     continue
                 if (value is not None) or (self._optcre == self.OPTCRE):
-                    key = " = ".join((key, unicode(value).replace('\n', '\n\t')))
+                    key = " = ".join((key, str(value).replace('\n', '\n\t')))
                 fp.write("%s\n" % key)
             fp.write("\n")

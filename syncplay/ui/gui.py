@@ -1,28 +1,35 @@
+
+import os
+import re
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime
+from functools import wraps
+from platform import python_version
+
+from twisted.internet import task
+
+from syncplay import utils, constants, version, revision, release_number
+from syncplay.messages import getMessage
+from syncplay.ui.consoleUI import ConsoleUI
+from syncplay.utils import resourcespath
+from syncplay.utils import isLinux, isWindows, isMacOS
+from syncplay.utils import formatTime, sameFilename, sameFilesize, sameFileduration, RoomPasswordProvider, formatSize, isURL
 from syncplay.vendor import Qt
-from syncplay.vendor.Qt import QtWidgets, QtGui, __binding__, __binding_version__, IsPySide, IsPySide2
+from syncplay.vendor.Qt import QtWidgets, QtGui, __binding__, __binding_version__, __qt_version__, IsPySide, IsPySide2
 from syncplay.vendor.Qt.QtCore import Qt, QSettings, QSize, QPoint, QUrl, QLine, QDateTime
 if IsPySide2:
     from PySide2.QtCore import QStandardPaths
-from syncplay import utils, constants, version, release_number
-from syncplay.messages import getMessage
-from syncplay.utils import resourcespath
-import sys
-import time
-import urllib
-from datetime import datetime
-from syncplay.utils import isLinux, isWindows, isMacOS
-import re
-import os
-from syncplay.utils import formatTime, sameFilename, sameFilesize, sameFileduration, RoomPasswordProvider, formatSize, isURL
-from functools import wraps
-from twisted.internet import task
-from syncplay.ui.consoleUI import ConsoleUI
 if isMacOS() and IsPySide:
     from Foundation import NSURL
     from Cocoa import NSString, NSUTF8StringEncoding
 import subprocess as sp
 
 lastCheckedForUpdates = None
+
 
 class ConsoleInGUI(ConsoleUI):
     def showMessage(self, message, noTimestamp=False):
@@ -40,6 +47,7 @@ class ConsoleInGUI(ConsoleUI):
     def getUserlist(self):
         self._syncplayClient.showUserList(self)
 
+
 class UserlistItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self):
         QtWidgets.QStyledItemDelegate.__init__(self)
@@ -56,26 +64,26 @@ class UserlistItemDelegate(QtWidgets.QStyledItemDelegate):
         if column == constants.USERLIST_GUI_USERNAME_COLUMN:
             currentQAbstractItemModel = indexQModelIndex.model()
             itemQModelIndex = currentQAbstractItemModel.index(indexQModelIndex.row(), constants.USERLIST_GUI_USERNAME_COLUMN, indexQModelIndex.parent())
-            controlIconQPixmap = QtGui.QPixmap(resourcespath + u"user_key.png")
-            tickIconQPixmap = QtGui.QPixmap(resourcespath + u"tick.png")
-            crossIconQPixmap = QtGui.QPixmap(resourcespath + u"cross.png")
+            controlIconQPixmap = QtGui.QPixmap(resourcespath + "user_key.png")
+            tickIconQPixmap = QtGui.QPixmap(resourcespath + "tick.png")
+            crossIconQPixmap = QtGui.QPixmap(resourcespath + "cross.png")
             roomController = currentQAbstractItemModel.data(itemQModelIndex, Qt.UserRole + constants.USERITEM_CONTROLLER_ROLE)
             userReady = currentQAbstractItemModel.data(itemQModelIndex, Qt.UserRole + constants.USERITEM_READY_ROLE)
 
             if roomController and not controlIconQPixmap.isNull():
-                itemQPainter.drawPixmap (
+                itemQPainter.drawPixmap(
                     optionQStyleOptionViewItem.rect.x()+6,
                     midY-8,
                     controlIconQPixmap.scaled(16, 16, Qt.KeepAspectRatio))
 
             if userReady and not tickIconQPixmap.isNull():
-                itemQPainter.drawPixmap (
+                itemQPainter.drawPixmap(
                     (optionQStyleOptionViewItem.rect.x()-10),
                     midY - 8,
                     tickIconQPixmap.scaled(16, 16, Qt.KeepAspectRatio))
 
             elif userReady == False and not crossIconQPixmap.isNull():
-                itemQPainter.drawPixmap (
+                itemQPainter.drawPixmap(
                     (optionQStyleOptionViewItem.rect.x()-10),
                     midY - 8,
                     crossIconQPixmap.scaled(16, 16, Qt.KeepAspectRatio))
@@ -87,69 +95,79 @@ class UserlistItemDelegate(QtWidgets.QStyledItemDelegate):
             itemQModelIndex = currentQAbstractItemModel.index(indexQModelIndex.row(), constants.USERLIST_GUI_FILENAME_COLUMN, indexQModelIndex.parent())
             fileSwitchRole = currentQAbstractItemModel.data(itemQModelIndex, Qt.UserRole + constants.FILEITEM_SWITCH_ROLE)
             if fileSwitchRole == constants.FILEITEM_SWITCH_FILE_SWITCH:
-                fileSwitchIconQPixmap = QtGui.QPixmap(resourcespath + u"film_go.png")
-                itemQPainter.drawPixmap (
+                fileSwitchIconQPixmap = QtGui.QPixmap(resourcespath + "film_go.png")
+                itemQPainter.drawPixmap(
                     (optionQStyleOptionViewItem.rect.x()),
                     midY - 8,
                     fileSwitchIconQPixmap.scaled(16, 16, Qt.KeepAspectRatio))
                 optionQStyleOptionViewItem.rect.setX(optionQStyleOptionViewItem.rect.x()+16)
 
             elif fileSwitchRole == constants.FILEITEM_SWITCH_STREAM_SWITCH:
-                streamSwitchIconQPixmap = QtGui.QPixmap(resourcespath + u"world_go.png")
-                itemQPainter.drawPixmap (
+                streamSwitchIconQPixmap = QtGui.QPixmap(resourcespath + "world_go.png")
+                itemQPainter.drawPixmap(
                     (optionQStyleOptionViewItem.rect.x()),
                     midY - 8,
                     streamSwitchIconQPixmap.scaled(16, 16, Qt.KeepAspectRatio))
                 optionQStyleOptionViewItem.rect.setX(optionQStyleOptionViewItem.rect.x()+16)
         QtWidgets.QStyledItemDelegate.paint(self, itemQPainter, optionQStyleOptionViewItem, indexQModelIndex)
 
-class AboutDialog(QtWidgets.QDialog):
-     def __init__(self, parent=None):
-         super(AboutDialog, self).__init__(parent)
-         if isMacOS():
-             self.setWindowTitle("")
-         else:
-             self.setWindowTitle(getMessage("about-dialog-title"))
-             if isWindows():
-                self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-         nameLabel = QtWidgets.QLabel("<center><strong>Syncplay</strong></center>")
-         nameLabel.setFont(QtGui.QFont("Helvetica", 20))
-         linkLabel = QtWidgets.QLabel("<center><a href=\"https://syncplay.pl\">syncplay.pl</a></center>")
-         linkLabel.setOpenExternalLinks(True)
-         versionLabel = QtWidgets.QLabel("<center>" + getMessage("about-dialog-release").format(version, release_number, __binding__) + "</center>")
-         licenseLabel = QtWidgets.QLabel("<center><p>Copyright &copy; 2017 Syncplay</p><p>" + getMessage("about-dialog-license-text") + "</p></center>")
-         aboutIconPixmap = QtGui.QPixmap(resourcespath + u"syncplay.png")
-         aboutIconLabel = QtWidgets.QLabel()
-         aboutIconLabel.setPixmap(aboutIconPixmap.scaled(120, 120, Qt.KeepAspectRatio))
-         aboutLayout = QtWidgets.QGridLayout()
-         aboutLayout.addWidget(aboutIconLabel, 0, 0, 4, 2)
-         aboutLayout.addWidget(nameLabel, 0, 2, 1, 2)
-         aboutLayout.addWidget(linkLabel, 1, 2, 1, 2)
-         aboutLayout.addWidget(versionLabel, 2, 2, 1, 2)
-         aboutLayout.addWidget(licenseLabel, 3, 2, 1, 2)
-         licenseButton = QtWidgets.QPushButton(getMessage("about-dialog-license-button"))
-         licenseButton.setAutoDefault(False)
-         licenseButton.clicked.connect(self.openLicense)
-         aboutLayout.addWidget(licenseButton, 4, 2)
-         dependenciesButton = QtWidgets.QPushButton(getMessage("about-dialog-dependencies"))
-         dependenciesButton.setAutoDefault(False)
-         dependenciesButton.clicked.connect(self.openDependencies)
-         aboutLayout.addWidget(dependenciesButton, 4, 3)
-         aboutLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-         self.setSizeGripEnabled(False)
-         self.setLayout(aboutLayout)
 
-     def openLicense(self):
-        if isWindows():
-              QtGui.QDesktopServices.openUrl(QUrl("file:///" + resourcespath + u"license.rtf"))
+class AboutDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(AboutDialog, self).__init__(parent)
+        if isMacOS():
+            self.setWindowTitle("")
+            self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint | Qt.WindowCloseButtonHint | Qt.CustomizeWindowHint)
         else:
-              QtGui.QDesktopServices.openUrl(QUrl("file://" + resourcespath + u"license.rtf"))
-         
-     def openDependencies(self):
-         if isWindows():
-              QtGui.QDesktopServices.openUrl(QUrl("file:///" + resourcespath + u"third-party-notices.rtf"))
-         else:
-              QtGui.QDesktopServices.openUrl(QUrl("file://" + resourcespath + u"third-party-notices.rtf"))
+            self.setWindowTitle(getMessage("about-dialog-title"))
+            if isWindows():
+                self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        nameLabel = QtWidgets.QLabel("<center><strong>Syncplay</strong></center>")
+        nameLabel.setFont(QtGui.QFont("Helvetica", 18))
+        linkLabel = QtWidgets.QLabel("<center><a href=\"https://syncplay.pl\">syncplay.pl</a></center>")
+        linkLabel.setOpenExternalLinks(True)
+        versionExtString = version + revision
+        versionLabel = QtWidgets.QLabel(
+            "<p><center>" + getMessage("about-dialog-release").format(versionExtString, release_number) +
+            "<br />Python " + python_version() + " - " + __binding__ + " " + __binding_version__ +
+            " - Qt " + __qt_version__ + "</center></p>")
+        licenseLabel = QtWidgets.QLabel(
+            "<center><p>Copyright &copy; 2012&ndash;2018 Syncplay</p><p>" +
+            getMessage("about-dialog-license-text") + "</p></center>")
+        aboutIconPixmap = QtGui.QPixmap(resourcespath + "syncplay.png")
+        aboutIconLabel = QtWidgets.QLabel()
+        aboutIconLabel.setPixmap(aboutIconPixmap.scaled(65, 65, Qt.KeepAspectRatio))
+        aboutLayout = QtWidgets.QGridLayout()
+        aboutLayout.addWidget(aboutIconLabel, 0, 0, 3, 4, Qt.AlignHCenter)
+        aboutLayout.addWidget(nameLabel, 3, 0, 1, 4)
+        aboutLayout.addWidget(linkLabel, 4, 0, 1, 4)
+        aboutLayout.addWidget(versionLabel, 5, 0, 1, 4)
+        aboutLayout.addWidget(licenseLabel, 6, 0, 1, 4)
+        licenseButton = QtWidgets.QPushButton(getMessage("about-dialog-license-button"))
+        licenseButton.setAutoDefault(False)
+        licenseButton.clicked.connect(self.openLicense)
+        aboutLayout.addWidget(licenseButton, 7, 0, 1, 2)
+        dependenciesButton = QtWidgets.QPushButton(getMessage("about-dialog-dependencies"))
+        dependenciesButton.setAutoDefault(False)
+        dependenciesButton.clicked.connect(self.openDependencies)
+        aboutLayout.addWidget(dependenciesButton, 7, 2, 1, 2)
+        aboutLayout.setVerticalSpacing(10)
+        aboutLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+        self.setSizeGripEnabled(False)
+        self.setLayout(aboutLayout)
+
+    def openLicense(self):
+        if isWindows():
+                QtGui.QDesktopServices.openUrl(QUrl("file:///" + resourcespath + "license.rtf"))
+        else:
+                QtGui.QDesktopServices.openUrl(QUrl("file://" + resourcespath + "license.rtf"))
+
+    def openDependencies(self):
+        if isWindows():
+            QtGui.QDesktopServices.openUrl(QUrl("file:///" + resourcespath + "third-party-notices.rtf"))
+        else:
+            QtGui.QDesktopServices.openUrl(QUrl("file://" + resourcespath + "third-party-notices.rtf"))
+
 
 class MainWindow(QtWidgets.QMainWindow):
     insertPosition = None
@@ -160,7 +178,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def setPlaylistInsertPosition(self, newPosition):
         if not self.playlist.isEnabled():
             return
-        if MainWindow.insertPosition <> newPosition:
+        if MainWindow.insertPosition != newPosition:
             MainWindow.insertPosition = newPosition
             self.playlist.forceUpdate()
 
@@ -170,9 +188,9 @@ class MainWindow(QtWidgets.QMainWindow):
             currentQAbstractItemModel = indexQModelIndex.model()
             currentlyPlayingFile = currentQAbstractItemModel.data(indexQModelIndex, Qt.UserRole + constants.PLAYLISTITEM_CURRENTLYPLAYING_ROLE)
             if currentlyPlayingFile:
-                currentlyplayingIconQPixmap = QtGui.QPixmap(resourcespath + u"bullet_right_grey.png")
+                currentlyplayingIconQPixmap = QtGui.QPixmap(resourcespath + "bullet_right_grey.png")
                 midY = int((optionQStyleOptionViewItem.rect.y() + optionQStyleOptionViewItem.rect.bottomLeft().y()) / 2)
-                itemQPainter.drawPixmap (
+                itemQPainter.drawPixmap(
                     (optionQStyleOptionViewItem.rect.x()+4),
                     midY-8,
                     currentlyplayingIconQPixmap.scaled(6, 16, Qt.KeepAspectRatio))
@@ -225,11 +243,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 for url in urls[::-1]:
                     if isMacOS() and IsPySide:
-                        macURL = NSString.alloc().initWithString_(unicode(url.toString()))
+                        macURL = NSString.alloc().initWithString_(str(url.toString()))
                         pathString = macURL.stringByAddingPercentEscapesUsingEncoding_(NSUTF8StringEncoding)
                         dropfilepath = os.path.abspath(NSURL.URLWithString_(pathString).filePathURL().path())
                     else:
-                        dropfilepath = os.path.abspath(unicode(url.toLocalFile()))                    
+                        dropfilepath = os.path.abspath(str(url.toLocalFile()))
                     if os.path.isfile(dropfilepath):
                         window.addFileToPlaylist(dropfilepath, indexRow)
                     elif os.path.isdir(dropfilepath):
@@ -242,12 +260,12 @@ class MainWindow(QtWidgets.QMainWindow):
         playlistIndexFilename = None
 
         def setPlaylistIndexFilename(self, filename):
-            if filename <> self.playlistIndexFilename:
+            if filename != self.playlistIndexFilename:
                 self.playlistIndexFilename = filename
             self.updatePlaylistIndexIcon()
 
         def updatePlaylistIndexIcon(self):
-            for item in xrange(self.count()):
+            for item in range(self.count()):
                 itemFilename = self.item(item).text()
                 isPlayingFilename = itemFilename == self.playlistIndexFilename
                 self.item(item).setData(Qt.UserRole + constants.PLAYLISTITEM_CURRENTLYPLAYING_ROLE, isPlayingFilename)
@@ -280,7 +298,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 super(MainWindow.PlaylistWidget, self).keyPressEvent(event)
 
         def updatePlaylist(self, newPlaylist):
-            for index in xrange(self.count()):
+            for index in range(self.count()):
                 self.takeItem(0)
             uniquePlaylist = []
             for item in newPlaylist:
@@ -332,19 +350,17 @@ class MainWindow(QtWidgets.QMainWindow):
                     indexRow = window.playlist.count()
                 for url in urls[::-1]:
                     if isMacOS() and IsPySide:
-                        macURL = NSString.alloc().initWithString_(unicode(url.toString()))
+                        macURL = NSString.alloc().initWithString_(str(url.toString()))
                         pathString = macURL.stringByAddingPercentEscapesUsingEncoding_(NSUTF8StringEncoding)
                         dropfilepath = os.path.abspath(NSURL.URLWithString_(pathString).filePathURL().path())
                     else:
-                        dropfilepath = os.path.abspath(unicode(url.toLocalFile())) 
+                        dropfilepath = os.path.abspath(str(url.toLocalFile()))
                     if os.path.isfile(dropfilepath):
                         window.addFileToPlaylist(dropfilepath, indexRow)
                     elif os.path.isdir(dropfilepath):
                         window.addFolderToPlaylist(dropfilepath)
             else:
                 super(MainWindow.PlaylistWidget, self).dropEvent(event)
-
-
 
     class topSplitter(QtWidgets.QSplitter):
         def createHandle(self):
@@ -430,27 +446,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.roomInput.setMaxLength(constants.MAX_ROOM_NAME_LENGTH)
 
     def showMessage(self, message, noTimestamp=False):
-        message = unicode(message)
+        message = str(message)
         username = None
         messageWithUsername = re.match(constants.MESSAGE_WITH_USERNAME_REGEX, message, re.UNICODE)
         if messageWithUsername:
             username = messageWithUsername.group("username")
             message = messageWithUsername.group("message")
-        message = message.replace(u"&", u"&amp;").replace(u'"', u"&quot;").replace(u"<", u"&lt;").replace(u">", u"&gt;")
+        message = message.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
         if username:
             message = constants.STYLE_USER_MESSAGE.format(constants.STYLE_USERNAME, username, message)
-        message = message.replace(u"\n", u"<br />")
+        message = message.replace("\n", "<br />")
         if noTimestamp:
-            self.newMessage(u"{}<br />".format(message))
+            self.newMessage("{}<br />".format(message))
         else:
-            self.newMessage(time.strftime(constants.UI_TIME_FORMAT, time.localtime()).decode('utf-8') + message + u"<br />")
+            self.newMessage(time.strftime(constants.UI_TIME_FORMAT, time.localtime()) + message + "<br />")
 
     @needsClient
     def getFileSwitchState(self, filename):
         if filename:
             if filename == getMessage("nofile-note"):
                 return constants.FILEITEM_SWITCH_NO_SWITCH
-            if self._syncplayClient.userlist.currentUser.file and utils.sameFilename(filename,self._syncplayClient.userlist.currentUser.file['name']):
+            if self._syncplayClient.userlist.currentUser.file and utils.sameFilename(filename, self._syncplayClient.userlist.currentUser.file['name']):
                 return constants.FILEITEM_SWITCH_NO_SWITCH
             if isURL(filename):
                 return constants.FILEITEM_SWITCH_STREAM_SWITCH
@@ -483,9 +499,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def showUserList(self, currentUser, rooms):
         self._usertreebuffer = QtGui.QStandardItemModel()
         self._usertreebuffer.setHorizontalHeaderLabels(
-            (getMessage("roomuser-heading-label"), getMessage("size-heading-label"), getMessage("duration-heading-label"), getMessage("filename-heading-label") ))
+            (
+                getMessage("roomuser-heading-label"), getMessage("size-heading-label"),
+                getMessage("duration-heading-label"), getMessage("filename-heading-label")
+            ))
         usertreeRoot = self._usertreebuffer.invisibleRootItem()
-        if self._syncplayClient.userlist.currentUser.file and self._syncplayClient.userlist.currentUser.file and os.path.isfile(self._syncplayClient.userlist.currentUser.file["path"]):
+        if (
+            self._syncplayClient.userlist.currentUser.file and
+            self._syncplayClient.userlist.currentUser.file and
+            os.path.isfile(self._syncplayClient.userlist.currentUser.file["path"])
+        ):
             self._syncplayClient.fileSwitch.setCurrentDirectory(os.path.dirname(self._syncplayClient.userlist.currentUser.file["path"]))
 
         for room in rooms:
@@ -520,14 +543,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 useritem.setData(isReadyWithFile, Qt.UserRole + constants.USERITEM_READY_ROLE)
                 if user.file:
                     filesizeitem = QtGui.QStandardItem(formatSize(user.file['size']))
-                    filedurationitem = QtGui.QStandardItem(u"({})".format(formatTime(user.file['duration'])))
+                    filedurationitem = QtGui.QStandardItem("({})".format(formatTime(user.file['duration'])))
                     filename = user.file['name']
                     if isURL(filename):
-                        filename = urllib.unquote(filename)
-                        try:
-                            filename = filename.decode('utf-8')
-                        except UnicodeEncodeError:
-                            pass
+                        filename = urllib.parse.unquote(filename)
                     filenameitem = QtGui.QStandardItem(filename)
                     fileSwitchState = self.getFileSwitchState(user.file['name']) if room == currentUser.room else None
                     if fileSwitchState != constants.FILEITEM_SWITCH_NO_SWITCH:
@@ -548,7 +567,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                 filenameitem.setFont(underlinefont)
                             if not sameSize:
                                 if formatSize(user.file['size']) == formatSize(currentUser.file['size']):
-                                    filesizeitem = QtGui.QStandardItem(formatSize(user.file['size'],precise=True))
+                                    filesizeitem = QtGui.QStandardItem(formatSize(user.file['size'], precise=True))
                                 filesizeitem.setFont(underlinefont)
                                 filesizeitem.setForeground(QtGui.QBrush(QtGui.QColor(constants.STYLE_DIFFERENTITEM_COLOR)))
                             if not sameDuration:
@@ -605,31 +624,30 @@ class MainWindow(QtWidgets.QMainWindow):
         if item:
             firstFile = item.sibling(item.row(), 0).data()
             pathFound = self._syncplayClient.fileSwitch.findFilepath(firstFile) if not isURL(firstFile) else None
-            if self._syncplayClient.userlist.currentUser.file is None or firstFile <> self._syncplayClient.userlist.currentUser.file["name"]:
+            if self._syncplayClient.userlist.currentUser.file is None or firstFile != self._syncplayClient.userlist.currentUser.file["name"]:
                 if isURL(firstFile):
-                    menu.addAction(QtGui.QPixmap(resourcespath + u"world_go.png"), getMessage("openstreamurl-menu-label"), lambda: self.openFile(firstFile,resetPosition=True))
+                    menu.addAction(QtGui.QPixmap(resourcespath + "world_go.png"), getMessage("openstreamurl-menu-label"), lambda: self.openFile(firstFile, resetPosition=True))
                 elif pathFound:
-                        menu.addAction(QtGui.QPixmap(resourcespath + u"film_go.png"), getMessage("openmedia-menu-label"), lambda: self.openFile(pathFound,resetPosition=True))
+                        menu.addAction(QtGui.QPixmap(resourcespath + "film_go.png"), getMessage("openmedia-menu-label"), lambda: self.openFile(pathFound, resetPosition=True))
             if pathFound:
-                menu.addAction(QtGui.QPixmap(resourcespath + u"folder_film.png"),
+                menu.addAction(QtGui.QPixmap(resourcespath + "folder_film.png"),
                                getMessage('open-containing-folder'),
                                lambda: utils.open_system_file_browser(pathFound))
             if self._syncplayClient.isUntrustedTrustableURI(firstFile):
                 domain = utils.getDomainFromURL(firstFile)
-                menu.addAction(QtGui.QPixmap(resourcespath + u"shield_add.png"),getMessage("addtrusteddomain-menu-label").format(domain), lambda: self.addTrustedDomain(domain))
-            menu.addAction(QtGui.QPixmap(resourcespath + u"delete.png"), getMessage("removefromplaylist-menu-label"), lambda: self.deleteSelectedPlaylistItems())
+                menu.addAction(QtGui.QPixmap(resourcespath + "shield_add.png"), getMessage("addtrusteddomain-menu-label").format(domain), lambda: self.addTrustedDomain(domain))
+            menu.addAction(QtGui.QPixmap(resourcespath + "delete.png"), getMessage("removefromplaylist-menu-label"), lambda: self.deleteSelectedPlaylistItems())
             menu.addSeparator()
-        menu.addAction(QtGui.QPixmap(resourcespath + u"arrow_switch.png"), getMessage("shuffleremainingplaylist-menu-label"), lambda: self.shuffleRemainingPlaylist())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"arrow_switch.png"), getMessage("shuffleentireplaylist-menu-label"), lambda: self.shuffleEntirePlaylist())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"arrow_undo.png"), getMessage("undoplaylist-menu-label"), lambda: self.undoPlaylistChange())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"film_edit.png"), getMessage("editplaylist-menu-label"), lambda: self.openEditPlaylistDialog())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"film_add.png"),getMessage("addfilestoplaylist-menu-label"), lambda: self.OpenAddFilesToPlaylistDialog())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"world_add.png"), getMessage("addurlstoplaylist-menu-label"), lambda: self.OpenAddURIsToPlaylistDialog())
+        menu.addAction(QtGui.QPixmap(resourcespath + "arrow_switch.png"), getMessage("shuffleremainingplaylist-menu-label"), lambda: self.shuffleRemainingPlaylist())
+        menu.addAction(QtGui.QPixmap(resourcespath + "arrow_switch.png"), getMessage("shuffleentireplaylist-menu-label"), lambda: self.shuffleEntirePlaylist())
+        menu.addAction(QtGui.QPixmap(resourcespath + "arrow_undo.png"), getMessage("undoplaylist-menu-label"), lambda: self.undoPlaylistChange())
+        menu.addAction(QtGui.QPixmap(resourcespath + "film_edit.png"), getMessage("editplaylist-menu-label"), lambda: self.openEditPlaylistDialog())
+        menu.addAction(QtGui.QPixmap(resourcespath + "film_add.png"), getMessage("addfilestoplaylist-menu-label"), lambda: self.OpenAddFilesToPlaylistDialog())
+        menu.addAction(QtGui.QPixmap(resourcespath + "world_add.png"), getMessage("addurlstoplaylist-menu-label"), lambda: self.OpenAddURIsToPlaylistDialog())
         menu.addSeparator()
-        menu.addAction(QtGui.QPixmap(resourcespath + u"film_folder_edit.png"), getMessage("setmediadirectories-menu-label"), lambda: self.openSetMediaDirectoriesDialog())
-        menu.addAction(QtGui.QPixmap(resourcespath + u"shield_edit.png"), getMessage("settrusteddomains-menu-label"), lambda: self.openSetTrustedDomainsDialog())
+        menu.addAction(QtGui.QPixmap(resourcespath + "film_folder_edit.png"), getMessage("setmediadirectories-menu-label"), lambda: self.openSetMediaDirectoriesDialog())
+        menu.addAction(QtGui.QPixmap(resourcespath + "shield_edit.png"), getMessage("settrusteddomains-menu-label"), lambda: self.openSetTrustedDomainsDialog())
         menu.exec_(self.playlist.viewport().mapToGlobal(position))
-
 
     def openRoomMenu(self, position):
         # TODO: Deselect items after right click
@@ -646,36 +664,36 @@ class MainWindow(QtWidgets.QMainWindow):
         elif len(username) < 15:
             shortUsername = getMessage("item-is-others-indicator").format(username)
         else:
-            shortUsername = u"{}...".format(getMessage("item-is-others-indicator").format(username[0:12])) # TODO: Enforce username limits in client and server
+            shortUsername = "{}...".format(getMessage("item-is-others-indicator").format(username[0:12]))  # TODO: Enforce username limits in client and server
 
         filename = item.sibling(item.row(), 3).data()
         while item.parent().row() != -1:
             item = item.parent()
         roomToJoin = item.sibling(item.row(), 0).data()
-        if roomToJoin <> self._syncplayClient.getRoom():
+        if roomToJoin != self._syncplayClient.getRoom():
             menu.addAction(getMessage("joinroom-menu-label").format(roomToJoin), lambda: self.joinRoom(roomToJoin))
-        elif username and filename and filename <> getMessage("nofile-note"):
+        elif username and filename and filename != getMessage("nofile-note"):
             if self.config['sharedPlaylistEnabled'] and not self.isItemInPlaylist(filename):
                 if isURL(filename):
-                    menu.addAction(QtGui.QPixmap(resourcespath + u"world_add.png"),getMessage("addusersstreamstoplaylist-menu-label").format(shortUsername), lambda: self.addStreamToPlaylist(filename))
+                    menu.addAction(QtGui.QPixmap(resourcespath + "world_add.png"), getMessage("addusersstreamstoplaylist-menu-label").format(shortUsername), lambda: self.addStreamToPlaylist(filename))
                 else:
-                    menu.addAction(QtGui.QPixmap(resourcespath + u"film_add.png"), getMessage("addusersfiletoplaylist-menu-label").format(shortUsername), lambda: self.addStreamToPlaylist(filename))
+                    menu.addAction(QtGui.QPixmap(resourcespath + "film_add.png"), getMessage("addusersfiletoplaylist-menu-label").format(shortUsername), lambda: self.addStreamToPlaylist(filename))
 
-            if self._syncplayClient.userlist.currentUser.file is None or filename <> self._syncplayClient.userlist.currentUser.file["name"]:
+            if self._syncplayClient.userlist.currentUser.file is None or filename != self._syncplayClient.userlist.currentUser.file["name"]:
                 if isURL(filename):
-                    menu.addAction(QtGui.QPixmap(resourcespath + u"world_go.png"), getMessage("openusersstream-menu-label").format(shortUsername), lambda: self.openFile(filename))
+                    menu.addAction(QtGui.QPixmap(resourcespath + "world_go.png"), getMessage("openusersstream-menu-label").format(shortUsername), lambda: self.openFile(filename))
                 else:
                     pathFound = self._syncplayClient.fileSwitch.findFilepath(filename)
                     if pathFound:
-                        menu.addAction(QtGui.QPixmap(resourcespath + u"film_go.png"), getMessage("openusersfile-menu-label").format(shortUsername), lambda: self.openFile(pathFound))
+                        menu.addAction(QtGui.QPixmap(resourcespath + "film_go.png"), getMessage("openusersfile-menu-label").format(shortUsername), lambda: self.openFile(pathFound))
             if self._syncplayClient.isUntrustedTrustableURI(filename):
                 domain = utils.getDomainFromURL(filename)
-                menu.addAction(QtGui.QPixmap(resourcespath + u"shield_add.png"),getMessage("addtrusteddomain-menu-label").format(domain), lambda: self.addTrustedDomain(domain))
+                menu.addAction(QtGui.QPixmap(resourcespath + "shield_add.png"), getMessage("addtrusteddomain-menu-label").format(domain), lambda: self.addTrustedDomain(domain))
 
-            if not isURL(filename) and filename <> getMessage("nofile-note"):
+            if not isURL(filename) and filename != getMessage("nofile-note"):
                 path = self._syncplayClient.fileSwitch.findFilepath(filename)
                 if path:
-                    menu.addAction(QtGui.QPixmap(resourcespath + u"folder_film.png"), getMessage('open-containing-folder'), lambda: utils.open_system_file_browser(path))
+                    menu.addAction(QtGui.QPixmap(resourcespath + "folder_film.png"), getMessage('open-containing-folder'), lambda: utils.open_system_file_browser(path))
         else:
             return
         menu.exec_(self.listTreeView.viewport().mapToGlobal(position))
@@ -691,18 +709,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.listTreeView.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
                 self.listTreeView.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
                 self.listTreeView.header().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
-                self.listTreeView.header().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)    
+                self.listTreeView.header().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
             if IsPySide:
                 self.listTreeView.header().setResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
                 self.listTreeView.header().setResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
                 self.listTreeView.header().setResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
-                self.listTreeView.header().setResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)            
+                self.listTreeView.header().setResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
             NarrowTabsWidth = self.listTreeView.header().sectionSize(0)+self.listTreeView.header().sectionSize(1)+self.listTreeView.header().sectionSize(2)
             if self.listTreeView.header().width() < (NarrowTabsWidth+self.listTreeView.header().sectionSize(3)):
-                self.listTreeView.header().resizeSection(3,self.listTreeView.header().width()-NarrowTabsWidth)
+                self.listTreeView.header().resizeSection(3, self.listTreeView.header().width()-NarrowTabsWidth)
             else:
                 if IsPySide2:
-                    self.listTreeView.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)                
+                    self.listTreeView.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
                 if IsPySide:
                     self.listTreeView.header().setResizeMode(3, QtWidgets.QHeaderView.Stretch)
             self.listTreeView.expandAll()
@@ -711,7 +729,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateReadyState(self, newState):
         oldState = self.readyPushButton.isChecked()
-        if newState != oldState and newState != None:
+        if newState != oldState and newState is not None:
             self.readyPushButton.blockSignals(True)
             self.readyPushButton.setChecked(newState)
             self.readyPushButton.blockSignals(False)
@@ -745,9 +763,9 @@ class MainWindow(QtWidgets.QMainWindow):
         while item.parent().row() != -1:
             item = item.parent()
         roomToJoin = item.sibling(item.row(), 0).data()
-        if roomToJoin <> self._syncplayClient.getRoom():
+        if roomToJoin != self._syncplayClient.getRoom():
             self.joinRoom(item.sibling(item.row(), 0).data())
-        elif username and filename and username <> self._syncplayClient.userlist.currentUser.username:
+        elif username and filename and username != self._syncplayClient.userlist.currentUser.username:
             if self._isTryingToChangeToCurrentFile(filename):
                 return
             if isURL(filename):
@@ -775,17 +793,17 @@ class MainWindow(QtWidgets.QMainWindow):
         print(message)
 
     def showErrorMessage(self, message, criticalerror=False):
-        message = unicode(message)
+        message = str(message)
         if criticalerror:
             QtWidgets.QMessageBox.critical(self, "Syncplay", message)
-        message = message.replace(u"&", u"&amp;").replace(u'"', u"&quot;").replace(u"<", u"&lt;").replace(u">", u"&gt;")
-        message = message.replace(u"\n", u"<br />")
-        message = u"<span style=\"{}\">".format(constants.STYLE_ERRORNOTIFICATION) + message + u"</span>"
-        self.newMessage(time.strftime(constants.UI_TIME_FORMAT, time.localtime()).decode('utf-8') + message + u"<br />")
+        message = message.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+        message = message.replace("\n", "<br />")
+        message = "<span style=\"{}\">".format(constants.STYLE_ERRORNOTIFICATION) + message + "</span>"
+        self.newMessage(time.strftime(constants.UI_TIME_FORMAT, time.localtime()) + message + "<br />")
 
     @needsClient
     def joinRoom(self, room=None):
-        if room == None:
+        if room is None:
             room = self.roomInput.text()
         if room == "":
             if self._syncplayClient.userlist.currentUser.file:
@@ -798,13 +816,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self._syncplayClient.sendRoom()
 
     def seekPositionDialog(self):
-        seekTime, ok = QtWidgets.QInputDialog.getText(self, getMessage("seektime-menu-label"),
-                                                   getMessage("seektime-msgbox-label"), QtWidgets.QLineEdit.Normal,
-                                                   u"0:00")
+        seekTime, ok = QtWidgets.QInputDialog.getText(
+            self, getMessage("seektime-menu-label"),
+            getMessage("seektime-msgbox-label"), QtWidgets.QLineEdit.Normal,
+            "0:00")
         if ok and seekTime != '':
             self.seekPosition(seekTime)
-
-
 
     def seekFromButton(self):
         self.seekPosition(self.seekInput.text())
@@ -873,7 +890,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 defaultdirectory = QtGui.QDesktopServices.storageLocation(QtGui.QDesktopServices.HomeLocation)
             else:
                 defaultdirectory = ""
-        elif IsPySide2:        
+        elif IsPySide2:
             if self.config["mediaSearchDirectories"] and os.path.isdir(self.config["mediaSearchDirectories"][0]) and includeUserSpecifiedDirectories:
                 defaultdirectory = self.config["mediaSearchDirectories"][0]
             elif includeUserSpecifiedDirectories and os.path.isdir(self.mediadirectory):
@@ -883,7 +900,7 @@ class MainWindow(QtWidgets.QMainWindow):
             elif os.path.isdir(QStandardPaths.standardLocations(QStandardPaths.HomeLocation)[0]):
                 defaultdirectory = QStandardPaths.standardLocations(QStandardPaths.HomeLocation)[0]
             else:
-                defaultdirectory = ""        
+                defaultdirectory = ""
         return defaultdirectory
 
     @needsClient
@@ -904,8 +921,9 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             defaultdirectory = self.getInitialMediaDirectory()
         browserfilter = "All files (*)"
-        fileName, filtr = QtWidgets.QFileDialog.getOpenFileName(self, getMessage("browseformedia-label"), defaultdirectory,
-                                                            browserfilter, "", options)
+        fileName, filtr = QtWidgets.QFileDialog.getOpenFileName(
+            self, getMessage("browseformedia-label"), defaultdirectory,
+            browserfilter, "", options)
         if fileName:
             if isWindows():
                 fileName = fileName.replace("/", "\\")
@@ -922,9 +940,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.loadMediaBrowseSettings()
         if isMacOS() and IsPySide:
-             options = QtWidgets.QFileDialog.Options(QtWidgets.QFileDialog.DontUseNativeDialog)
+            options = QtWidgets.QFileDialog.Options(QtWidgets.QFileDialog.DontUseNativeDialog)
         else:
-             options = QtWidgets.QFileDialog.Options()
+            options = QtWidgets.QFileDialog.Options()
         self.mediadirectory = ""
         currentdirectory = os.path.dirname(self._syncplayClient.userlist.currentUser.file["path"]) if self._syncplayClient.userlist.currentUser.file else None
         if currentdirectory and os.path.isdir(currentdirectory):
@@ -932,8 +950,9 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             defaultdirectory = self.getInitialMediaDirectory()
         browserfilter = "All files (*)"
-        fileNames, filtr = QtWidgets.QFileDialog.getOpenFileNames(self, getMessage("browseformedia-label"), defaultdirectory,
-                                                            browserfilter, "", options)
+        fileNames, filtr = QtWidgets.QFileDialog.getOpenFileNames(
+            self, getMessage("browseformedia-label"), defaultdirectory,
+            browserfilter, "", options)
         self.updatingPlaylist = True
         if fileNames:
             for fileName in fileNames:
@@ -958,7 +977,7 @@ class MainWindow(QtWidgets.QMainWindow):
         URIsLayout.addWidget(URIsTextbox, 1, 0, 1, 1)
         URIsButtonBox = QtWidgets.QDialogButtonBox()
         URIsButtonBox.setOrientation(Qt.Horizontal)
-        URIsButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok|QtWidgets.QDialogButtonBox.Cancel)
+        URIsButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         URIsButtonBox.accepted.connect(URIsDialog.accept)
         URIsButtonBox.rejected.connect(URIsDialog.reject)
         URIsLayout.addWidget(URIsButtonBox, 2, 0, 1, 1)
@@ -971,13 +990,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.updatingPlaylist = True
             for URI in URIsToAdd:
                 URI = URI.rstrip()
-                try:
-                    URI = URI.encode('utf-8')
-                except UnicodeDecodeError:
-                    pass
-                URI = urllib.unquote(URI)
-                URI = URI.decode('utf-8')
-                if URI <> "":
+                URI = urllib.parse.unquote(URI)
+                if URI != "":
                     self.addStreamToPlaylist(URI)
             self.updatingPlaylist = False
 
@@ -994,7 +1008,7 @@ class MainWindow(QtWidgets.QMainWindow):
         editPlaylistLayout.addWidget(editPlaylistTextbox, 1, 0, 1, 1)
         editPlaylistButtonBox = QtWidgets.QDialogButtonBox()
         editPlaylistButtonBox.setOrientation(Qt.Horizontal)
-        editPlaylistButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok|QtWidgets.QDialogButtonBox.Cancel)
+        editPlaylistButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         editPlaylistButtonBox.accepted.connect(editPlaylistDialog.accept)
         editPlaylistButtonBox.rejected.connect(editPlaylistDialog.reject)
         editPlaylistLayout.addWidget(editPlaylistButtonBox, 2, 0, 1, 1)
@@ -1006,7 +1020,7 @@ class MainWindow(QtWidgets.QMainWindow):
         result = editPlaylistDialog.exec_()
         if result == QtWidgets.QDialog.Accepted:
             newPlaylist = utils.convertMultilineStringToList(editPlaylistTextbox.toPlainText())
-            if newPlaylist <> self.playlistState and self._syncplayClient and not self.updatingPlaylist:
+            if newPlaylist != self.playlistState and self._syncplayClient and not self.updatingPlaylist:
                 self.setPlaylist(newPlaylist)
                 self._syncplayClient.playlist.changePlaylist(newPlaylist)
                 self._syncplayClient.fileSwitch.updateInfo()
@@ -1014,7 +1028,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @needsClient
     def openSetMediaDirectoriesDialog(self):
         MediaDirectoriesDialog = QtWidgets.QDialog()
-        MediaDirectoriesDialog.setWindowTitle(getMessage("syncplay-mediasearchdirectories-title")) # TODO: Move to messages_*.py
+        MediaDirectoriesDialog.setWindowTitle(getMessage("syncplay-mediasearchdirectories-title"))  # TODO: Move to messages_*.py
         MediaDirectoriesLayout = QtWidgets.QGridLayout()
         MediaDirectoriesLabel = QtWidgets.QLabel(getMessage("syncplay-mediasearchdirectories-label"))
         MediaDirectoriesLayout.addWidget(MediaDirectoriesLabel, 0, 0, 1, 2)
@@ -1024,7 +1038,7 @@ class MainWindow(QtWidgets.QMainWindow):
         MediaDirectoriesLayout.addWidget(MediaDirectoriesTextbox, 1, 0, 1, 1)
         MediaDirectoriesButtonBox = QtWidgets.QDialogButtonBox()
         MediaDirectoriesButtonBox.setOrientation(Qt.Horizontal)
-        MediaDirectoriesButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok|QtWidgets.QDialogButtonBox.Cancel)
+        MediaDirectoriesButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         MediaDirectoriesButtonBox.accepted.connect(MediaDirectoriesDialog.accept)
         MediaDirectoriesButtonBox.rejected.connect(MediaDirectoriesDialog.reject)
         MediaDirectoriesLayout.addWidget(MediaDirectoriesButtonBox, 2, 0, 1, 1)
@@ -1052,7 +1066,7 @@ class MainWindow(QtWidgets.QMainWindow):
         TrustedDomainsLayout.addWidget(TrustedDomainsTextbox, 1, 0, 1, 1)
         TrustedDomainsButtonBox = QtWidgets.QDialogButtonBox()
         TrustedDomainsButtonBox.setOrientation(Qt.Horizontal)
-        TrustedDomainsButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok|QtWidgets.QDialogButtonBox.Cancel)
+        TrustedDomainsButtonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
         TrustedDomainsButtonBox.accepted.connect(TrustedDomainsDialog.accept)
         TrustedDomainsButtonBox.rejected.connect(TrustedDomainsDialog.reject)
         TrustedDomainsLayout.addWidget(TrustedDomainsButtonBox, 2, 0, 1, 1)
@@ -1063,6 +1077,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if result == QtWidgets.QDialog.Accepted:
             newTrustedDomains = utils.convertMultilineStringToList(TrustedDomainsTextbox.toPlainText())
             self._syncplayClient.setTrustedDomains(newTrustedDomains)
+
     @needsClient
     def addTrustedDomain(self, newDomain):
         trustedDomains = self.config["trustedDomains"][:]
@@ -1075,32 +1090,34 @@ class MainWindow(QtWidgets.QMainWindow):
         if isMacOS() and IsPySide:
             options = QtWidgets.QFileDialog.Options(QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontUseNativeDialog)
         else:
-            options = QtWidgets.QFileDialog.Options(QtWidgets.QFileDialog.ShowDirsOnly)        
-        folderName = unicode(QtWidgets.QFileDialog.getExistingDirectory(self,None,self.getInitialMediaDirectory(includeUserSpecifiedDirectories=False),options))
-         
+            options = QtWidgets.QFileDialog.Options(QtWidgets.QFileDialog.ShowDirsOnly)
+        folderName = str(QtWidgets.QFileDialog.getExistingDirectory(
+            self, None, self.getInitialMediaDirectory(includeUserSpecifiedDirectories=False), options))
+
         if folderName:
             existingMediaDirs = MediaDirectoriesTextbox.toPlainText()
             if existingMediaDirs == "":
                 newMediaDirList = folderName
             else:
-                newMediaDirList = existingMediaDirs + u"\n" + folderName
+                newMediaDirList = existingMediaDirs + "\n" + folderName
             MediaDirectoriesTextbox.setPlainText(newMediaDirList)
         MediaDirectoriesDialog.raise_()
         MediaDirectoriesDialog.activateWindow()
 
     @needsClient
     def promptForStreamURL(self):
-        streamURL, ok = QtWidgets.QInputDialog.getText(self, getMessage("promptforstreamurl-msgbox-label"),
-                                                   getMessage("promptforstreamurlinfo-msgbox-label"), QtWidgets.QLineEdit.Normal,
-                                                   "")
+        streamURL, ok = QtWidgets.QInputDialog.getText(
+            self, getMessage("promptforstreamurl-msgbox-label"),
+            getMessage("promptforstreamurlinfo-msgbox-label"), QtWidgets.QLineEdit.Normal, "")
         if ok and streamURL != '':
             self._syncplayClient._player.openFile(streamURL)
 
     @needsClient
     def createControlledRoom(self):
-        controlroom, ok = QtWidgets.QInputDialog.getText(self, getMessage("createcontrolledroom-msgbox-label"),
-                getMessage("controlledroominfo-msgbox-label"), QtWidgets.QLineEdit.Normal,
-                utils.stripRoomName(self._syncplayClient.getRoom()))
+        controlroom, ok = QtWidgets.QInputDialog.getText(
+            self, getMessage("createcontrolledroom-msgbox-label"),
+            getMessage("controlledroominfo-msgbox-label"), QtWidgets.QLineEdit.Normal,
+            utils.stripRoomName(self._syncplayClient.getRoom()))
         if ok and controlroom != '':
             self._syncplayClient.createControlledRoom(controlroom)
 
@@ -1123,9 +1140,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @needsClient
     def setOffset(self):
-        newoffset, ok = QtWidgets.QInputDialog.getText(self, getMessage("setoffset-msgbox-label"),
-                                                   getMessage("offsetinfo-msgbox-label"), QtWidgets.QLineEdit.Normal,
-                                                   "")
+        newoffset, ok = QtWidgets.QInputDialog.getText(
+            self, getMessage("setoffset-msgbox-label"),
+            getMessage("offsetinfo-msgbox-label"), QtWidgets.QLineEdit.Normal, "")
         if ok and newoffset != '':
             o = re.match(constants.UI_OFFSET_REGEX, "o " + newoffset)
             if o:
@@ -1154,9 +1171,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def getPlaylistState(self):
         playlistItems = []
-        for playlistItem in xrange(self.playlist.count()):
+        for playlistItem in range(self.playlist.count()):
             playlistItemText = self.playlist.item(playlistItem).text()
-            if playlistItemText <> getMessage("playlist-instruction-item-message"):
+            if playlistItemText != getMessage("playlist-instruction-item-message"):
                 playlistItems.append(playlistItemText)
         return playlistItems
 
@@ -1164,20 +1181,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.updatingPlaylist:
             return
         newPlaylist = self.getPlaylistState()
-        if newPlaylist <> self.playlistState and self._syncplayClient and not self.updatingPlaylist:
+        if newPlaylist != self.playlistState and self._syncplayClient and not self.updatingPlaylist:
             self.playlistState = newPlaylist
             self._syncplayClient.playlist.changePlaylist(newPlaylist)
             self._syncplayClient.fileSwitch.updateInfo()
 
     def executeCommand(self, command):
-        self.showMessage(u"/{}".format(command))
+        self.showMessage("/{}".format(command))
         self.console.executeCommand(command)
 
     def sendChatMessage(self):
         chatText = self.chatInput.text()
         self.chatInput.setText("")
-        if chatText <> "":
-            if chatText[:1] == "/" and chatText <> "/":
+        if chatText != "":
+            if chatText[:1] == "/" and chatText != "/":
                 command = chatText[1:]
                 if command and command[:1] == "/":
                     chatText = chatText[1:]
@@ -1204,15 +1221,16 @@ class MainWindow(QtWidgets.QMainWindow):
         window.chatInput = QtWidgets.QLineEdit()
         window.chatInput.setMaxLength(constants.MAX_CHAT_MESSAGE_LENGTH)
         window.chatInput.returnPressed.connect(self.sendChatMessage)
-        window.chatButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + 'email_go.png'),
-                                              getMessage("sendmessage-label"))
+        window.chatButton = QtWidgets.QPushButton(
+            QtGui.QPixmap(resourcespath + 'email_go.png'),
+            getMessage("sendmessage-label"))
         window.chatButton.pressed.connect(self.sendChatMessage)
         window.chatLayout = QtWidgets.QHBoxLayout()
         window.chatFrame = QtWidgets.QFrame()
         window.chatFrame.setLayout(self.chatLayout)
-        window.chatFrame.setContentsMargins(0,0,0,0)
+        window.chatFrame.setContentsMargins(0, 0, 0, 0)
         window.chatFrame.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        window.chatLayout.setContentsMargins(0,0,0,0)
+        window.chatLayout.setContentsMargins(0, 0, 0, 0)
         self.chatButton.setToolTip(getMessage("sendmessage-tooltip"))
         window.chatLayout.addWidget(window.chatInput)
         window.chatLayout.addWidget(window.chatButton)
@@ -1259,15 +1277,16 @@ class MainWindow(QtWidgets.QMainWindow):
         window.roomInput = QtWidgets.QLineEdit()
         window.roomInput.setMaxLength(constants.MAX_ROOM_NAME_LENGTH)
         window.roomInput.returnPressed.connect(self.joinRoom)
-        window.roomButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + 'door_in.png'),
-                                              getMessage("joinroom-label"))
+        window.roomButton = QtWidgets.QPushButton(
+            QtGui.QPixmap(resourcespath + 'door_in.png'),
+            getMessage("joinroom-label"))
         window.roomButton.pressed.connect(self.joinRoom)
         window.roomLayout = QtWidgets.QHBoxLayout()
         window.roomFrame = QtWidgets.QFrame()
         window.roomFrame.setLayout(self.roomLayout)
-        window.roomFrame.setContentsMargins(0,0,0,0)
+        window.roomFrame.setContentsMargins(0, 0, 0, 0)
         window.roomFrame.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        window.roomLayout.setContentsMargins(0,0,0,0)
+        window.roomLayout.setContentsMargins(0, 0, 0, 0)
         self.roomButton.setToolTip(getMessage("joinroom-tooltip"))
         window.roomLayout.addWidget(window.roomInput)
         window.roomLayout.addWidget(window.roomButton)
@@ -1278,8 +1297,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         window.topSplit.addWidget(window.outputFrame)
         window.topSplit.addWidget(window.listFrame)
-        window.topSplit.setStretchFactor(0,4)
-        window.topSplit.setStretchFactor(1,5)
+        window.topSplit.setStretchFactor(0, 4)
+        window.topSplit.setStretchFactor(1, 5)
         window.mainLayout.addWidget(window.topSplit)
         window.topSplit.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
 
@@ -1287,7 +1306,7 @@ class MainWindow(QtWidgets.QMainWindow):
         window.bottomLayout = QtWidgets.QHBoxLayout()
         window.bottomFrame = QtWidgets.QFrame()
         window.bottomFrame.setLayout(window.bottomLayout)
-        window.bottomLayout.setContentsMargins(0,0,0,0)
+        window.bottomLayout.setContentsMargins(0, 0, 0, 0)
 
         self.addPlaybackLayout(window)
         self.addSkipLayout(window)
@@ -1340,7 +1359,7 @@ class MainWindow(QtWidgets.QMainWindow):
         window.autoplayLayout = QtWidgets.QHBoxLayout()
         window.autoplayFrame = QtWidgets.QFrame()
         window.autoplayFrame.setVisible(False)
-        window.autoplayLayout.setContentsMargins(0,0,0,0)
+        window.autoplayLayout.setContentsMargins(0, 0, 0, 0)
         window.autoplayFrame.setLayout(window.autoplayLayout)
         window.autoplayPushButton = QtWidgets.QPushButton()
         autoPlayFont = QtGui.QFont()
@@ -1375,27 +1394,27 @@ class MainWindow(QtWidgets.QMainWindow):
     def addPlaybackLayout(self, window):
         window.playbackFrame = QtWidgets.QFrame()
         window.playbackFrame.setVisible(False)
-        window.playbackFrame.setContentsMargins(0,0,0,0)
+        window.playbackFrame.setContentsMargins(0, 0, 0, 0)
         window.playbackLayout = QtWidgets.QHBoxLayout()
         window.playbackLayout.setAlignment(Qt.AlignLeft)
-        window.playbackLayout.setContentsMargins(0,0,0,0)
+        window.playbackLayout.setContentsMargins(0, 0, 0, 0)
         window.playbackFrame.setLayout(window.playbackLayout)
         window.seekInput = QtWidgets.QLineEdit()
         window.seekInput.returnPressed.connect(self.seekFromButton)
-        window.seekButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + u'clock_go.png'), "")
+        window.seekButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + 'clock_go.png'), "")
         window.seekButton.setToolTip(getMessage("seektime-menu-label"))
         window.seekButton.pressed.connect(self.seekFromButton)
         window.seekInput.setText("0:00")
         window.seekInput.setFixedWidth(60)
         window.playbackLayout.addWidget(window.seekInput)
         window.playbackLayout.addWidget(window.seekButton)
-        window.unseekButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + u'arrow_undo.png'), "")
+        window.unseekButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + 'arrow_undo.png'), "")
         window.unseekButton.setToolTip(getMessage("undoseek-menu-label"))
         window.unseekButton.pressed.connect(self.undoSeek)
 
         window.miscLayout = QtWidgets.QHBoxLayout()
         window.playbackLayout.addWidget(window.unseekButton)
-        window.playButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + u'control_play_blue.png'), "")
+        window.playButton = QtWidgets.QPushButton(QtGui.QPixmap(resourcespath + 'control_play_blue.png'), "")
         window.playButton.setToolTip(getMessage("play-menu-label"))
         window.playButton.pressed.connect(self.play)
         window.playbackLayout.addWidget(window.playButton)
@@ -1471,7 +1490,6 @@ class MainWindow(QtWidgets.QMainWindow):
                                                       getMessage("setmediadirectories-menu-label"))
         window.openAction.triggered.connect(self.openSetMediaDirectoriesDialog)
 
-
         window.exitAction = window.fileMenu.addAction(QtGui.QPixmap(resourcespath + 'cross.png'),
                                                       getMessage("exit-menu-label"))
         window.exitAction.triggered.connect(self.exitSyncplay)
@@ -1480,13 +1498,21 @@ class MainWindow(QtWidgets.QMainWindow):
         # Playback menu
 
         window.playbackMenu = QtWidgets.QMenu(getMessage("playback-menu-label"), self)
-        window.playAction = window.playbackMenu.addAction(QtGui.QPixmap(resourcespath + 'control_play_blue.png'), getMessage("play-menu-label"))
+        window.playAction = window.playbackMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'control_play_blue.png'),
+            getMessage("play-menu-label"))
         window.playAction.triggered.connect(self.play)
-        window.pauseAction = window.playbackMenu.addAction(QtGui.QPixmap(resourcespath + 'control_pause_blue.png'), getMessage("pause-menu-label"))
+        window.pauseAction = window.playbackMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'control_pause_blue.png'),
+            getMessage("pause-menu-label"))
         window.pauseAction.triggered.connect(self.pause)
-        window.seekAction = window.playbackMenu.addAction(QtGui.QPixmap(resourcespath + 'clock_go.png'), getMessage("seektime-menu-label"))
+        window.seekAction = window.playbackMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'clock_go.png'),
+            getMessage("seektime-menu-label"))
         window.seekAction.triggered.connect(self.seekPositionDialog)
-        window.unseekAction = window.playbackMenu.addAction(QtGui.QPixmap(resourcespath + 'arrow_undo.png'), getMessage("undoseek-menu-label"))
+        window.unseekAction = window.playbackMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'arrow_undo.png'),
+            getMessage("undoseek-menu-label"))
         window.unseekAction.triggered.connect(self.undoSeek)
 
         window.menuBar.addMenu(window.playbackMenu)
@@ -1494,11 +1520,13 @@ class MainWindow(QtWidgets.QMainWindow):
         # Advanced menu
 
         window.advancedMenu = QtWidgets.QMenu(getMessage("advanced-menu-label"), self)
-        window.setoffsetAction = window.advancedMenu.addAction(QtGui.QPixmap(resourcespath + 'timeline_marker.png'),
-                                                               getMessage("setoffset-menu-label"))
+        window.setoffsetAction = window.advancedMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'timeline_marker.png'),
+            getMessage("setoffset-menu-label"))
         window.setoffsetAction.triggered.connect(self.setOffset)
-        window.setTrustedDomainsAction = window.advancedMenu.addAction(QtGui.QPixmap(resourcespath + 'shield_edit.png'),
-                                                      getMessage("settrusteddomains-menu-label"))
+        window.setTrustedDomainsAction = window.advancedMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'shield_edit.png'),
+            getMessage("settrusteddomains-menu-label"))
         window.setTrustedDomainsAction.triggered.connect(self.openSetTrustedDomainsDialog)
         window.createcontrolledroomAction = window.advancedMenu.addAction(
             QtGui.QPixmap(resourcespath + 'page_white_key.png'), getMessage("createcontrolledroom-menu-label"))
@@ -1527,23 +1555,25 @@ class MainWindow(QtWidgets.QMainWindow):
         
         window.menuBar.addMenu(window.windowMenu)
 
-
         # Help menu
 
         window.helpMenu = QtWidgets.QMenu(getMessage("help-menu-label"), self)
-                
-        window.userguideAction = window.helpMenu.addAction(QtGui.QPixmap(resourcespath + 'help.png'),
-                                                           getMessage("userguide-menu-label"))
+
+        window.userguideAction = window.helpMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'help.png'),
+            getMessage("userguide-menu-label"))
         window.userguideAction.triggered.connect(self.openUserGuide)
-        window.updateAction = window.helpMenu.addAction(QtGui.QPixmap(resourcespath + 'application_get.png'),
-                                                           getMessage("update-menu-label"))
+        window.updateAction = window.helpMenu.addAction(
+            QtGui.QPixmap(resourcespath + 'application_get.png'),
+            getMessage("update-menu-label"))
         window.updateAction.triggered.connect(self.userCheckForUpdates)
-		
+
         if not isMacOS():
-     	    window.helpMenu.addSeparator()
-            window.about = window.helpMenu.addAction(QtGui.QPixmap(resourcespath + 'syncplay.png'),
-                                                           getMessage("about-menu-label"))
-        else:												   
+            window.helpMenu.addSeparator()
+            window.about = window.helpMenu.addAction(
+                QtGui.QPixmap(resourcespath + 'syncplay.png'),
+                getMessage("about-menu-label"))
+        else:
             window.about = window.helpMenu.addAction("&About")
         window.about.triggered.connect(self.openAbout)
 
@@ -1554,7 +1584,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def openAbout(self):
         aboutMsgBox = AboutDialog()
         aboutMsgBox.exec_()
-		
+
     def addMainFrame(self, window):
         window.mainFrame = QtWidgets.QFrame()
         window.mainFrame.setLineWidth(0)
@@ -1602,7 +1632,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateAutoPlayState(self, newState):
         oldState = self.autoplayPushButton.isChecked()
-        if newState != oldState and newState != None:
+        if newState != oldState and newState is not None:
             self.autoplayPushButton.blockSignals(True)
             self.autoplayPushButton.setChecked(newState)
             self.autoplayPushButton.blockSignals(False)
@@ -1721,16 +1751,20 @@ class MainWindow(QtWidgets.QMainWindow):
         currentDateTimeValue = QDateTime.currentDateTime()
         if not self.config['checkForUpdatesAutomatically']:
             return
-        if self.config['lastCheckedForUpdates']:
-            configLastChecked = datetime.strptime(self.config["lastCheckedForUpdates"], "%Y-%m-%d %H:%M:%S.%f")
-            if self.lastCheckedForUpdates is None or configLastChecked > self.lastCheckedForUpdates.toPython():
-                self.lastCheckedForUpdates = QDateTime.fromString(self.config["lastCheckedForUpdates"],'yyyy-MM-dd HH-mm-ss')
-        if self.lastCheckedForUpdates is None:
-            self.checkForUpdates()
-        else:
-            timeDelta = currentDateTimeValue.toPython() - self.lastCheckedForUpdates.toPython()
-            if timeDelta.total_seconds() > constants.AUTOMATIC_UPDATE_CHECK_FREQUENCY:
+        try:
+            if self.config['lastCheckedForUpdates']:
+                configLastChecked = datetime.strptime(self.config["lastCheckedForUpdates"], "%Y-%m-%d %H:%M:%S.%f")
+                if self.lastCheckedForUpdates is None or configLastChecked > self.lastCheckedForUpdates.toPython():
+                    self.lastCheckedForUpdates = QDateTime.fromString(self.config["lastCheckedForUpdates"], 'yyyy-MM-dd HH-mm-ss')
+            if self.lastCheckedForUpdates is None:
                 self.checkForUpdates()
+            else:
+                timeDelta = currentDateTimeValue.toPython() - self.lastCheckedForUpdates.toPython()
+                if timeDelta.total_seconds() > constants.AUTOMATIC_UPDATE_CHECK_FREQUENCY:
+                    self.checkForUpdates()
+        except:
+            self.showDebugMessage("Automatic check for updates failed. An update check was manually trigggered.")
+            self.checkForUpdates()
 
     def userCheckForUpdates(self):
         self.checkForUpdates(userInitiated=True)
@@ -1751,8 +1785,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 if userInitiated == True:
                     updateURL = constants.SYNCPLAY_DOWNLOAD_URL
         if updateURL is not None:
-            reply = QtWidgets.QMessageBox.question(self, "Syncplay",
-                                        updateMessage, QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+            reply = QtWidgets.QMessageBox.question(
+                self, "Syncplay",
+                updateMessage, QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
             if reply == QtWidgets.QMessageBox.Yes:
                 self.QtGui.QDesktopServices.openUrl(QUrl(updateURL))
         elif userInitiated:
@@ -1776,11 +1811,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if urls and urls[0].scheme() == 'file':
             url = event.mimeData().urls()[0]
             if isMacOS() and IsPySide:
-                macURL = NSString.alloc().initWithString_(unicode(url.toString()))
+                macURL = NSString.alloc().initWithString_(str(url.toString()))
                 pathString = macURL.stringByAddingPercentEscapesUsingEncoding_(NSUTF8StringEncoding)
                 dropfilepath = os.path.abspath(NSURL.URLWithString_(pathString).filePathURL().path())
             else:
-                dropfilepath = os.path.abspath(unicode(url.toLocalFile()))
+                dropfilepath = os.path.abspath(str(url.toLocalFile()))
             if rewindFile == False:
                 self._syncplayClient._player.openFile(dropfilepath)
             else:
@@ -1790,7 +1825,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def setPlaylist(self, newPlaylist, newIndexFilename=None):
         if self.updatingPlaylist:
-            self.ui.showDebugMessage(u"Trying to set playlist while it is already being updated")
+            self.ui.showDebugMessage("Trying to set playlist while it is already being updated")
         if newPlaylist == self.playlistState:
             if newIndexFilename:
                 self.playlist.setPlaylistIndexFilename(newIndexFilename)
@@ -1809,7 +1844,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def setPlaylistIndexFilename(self, filename):
         self.playlist.setPlaylistIndexFilename(filename)
 
-    def addFileToPlaylist(self, filePath, index = -1):
+    def addFileToPlaylist(self, filePath, index=-1):
         if os.path.isfile(filePath):
             self.removePlaylistNote()
             filename = os.path.basename(filePath)
@@ -1838,7 +1873,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return True
 
     def isItemInPlaylist(self, filename):
-        for playlistindex in xrange(self.playlist.count()):
+        for playlistindex in range(self.playlist.count()):
             if self.playlist.item(playlistindex).text() == filename:
                 return True
         return False
@@ -1850,13 +1885,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def removePlaylistNote(self):
         if not self.clearedPlaylistNote:
-            for index in xrange(self.playlist.count()):
+            for index in range(self.playlist.count()):
                 self.playlist.takeItem(0)
             self.clearedPlaylistNote = True
 
     def addFolderToPlaylist(self, folderPath):
-        self.showErrorMessage(u"You tried to add the folder '{}' to the playlist. Syncplay only currently supports adding files to the playlist.".format(folderPath)) # TODO: Implement "add folder to playlist"
-        
+        self.showErrorMessage("You tried to add the folder '{}' to the playlist. Syncplay only currently supports adding files to the playlist.".format(folderPath))  # TODO: Implement "add folder to playlist"
+
     def deleteSelectedPlaylistItems(self):
         self.playlist.remove_selected_items()
 
@@ -1941,7 +1976,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addMenubar(self)
         self.addMainFrame(self)
         self.loadSettings()
-        self.setWindowIcon(QtGui.QPixmap(resourcespath + u"syncplay.png"))
+        self.setWindowIcon(QtGui.QPixmap(resourcespath + "syncplay.png"))
         self.setWindowFlags(self.windowFlags() & Qt.WindowCloseButtonHint & Qt.AA_DontUseNativeMenuBar & Qt.WindowMinimizeButtonHint & ~Qt.WindowContextHelpButtonHint)
         self.show()
         self.setAcceptDrops(True)

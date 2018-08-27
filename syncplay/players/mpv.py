@@ -1,27 +1,33 @@
 # coding:utf8
+import os
 import re
+import sys
+import time
 import subprocess
+
+from syncplay import constants
 from syncplay.players.mplayer import MplayerPlayer
 from syncplay.messages import getMessage
-from syncplay import constants
 from syncplay.utils import isURL, findResourcePath
-import os, sys, time
+
 
 class MpvPlayer(MplayerPlayer):
-    RE_VERSION = re.compile('.*mpv (\d+)\.(\d+)\.\d+.*')
+    RE_VERSION = re.compile(r'.*mpv (\d+)\.(\d+)\.\d+.*')
     osdMessageSeparator = "\\n"
-    osdMessageSeparator = "; " # TODO: Make conditional
+    osdMessageSeparator = "; "  # TODO: Make conditional
 
     @staticmethod
     def run(client, playerPath, filePath, args):
         try:
-            ver = MpvPlayer.RE_VERSION.search(subprocess.check_output([playerPath, '--version']))
+            ver = MpvPlayer.RE_VERSION.search(subprocess.check_output([playerPath, '--version']).decode('utf-8'))
         except:
             ver = None
         constants.MPV_NEW_VERSION = ver is None or int(ver.group(1)) > 0 or int(ver.group(2)) >= 6
-        constants.MPV_OSC_VISIBILITY_CHANGE_VERSION = False if ver is None else  int(ver.group(1)) > 0 or int(ver.group(2)) >= 28
+        constants.MPV_OSC_VISIBILITY_CHANGE_VERSION = False if ver is None else int(ver.group(1)) > 0 or int(ver.group(2)) >= 28
         if not constants.MPV_OSC_VISIBILITY_CHANGE_VERSION:
-            client.ui.showDebugMessage(u"This version of mpv is not known to be compatible with changing the OSC visibility. Please use mpv >=0.28.0.")
+            client.ui.showDebugMessage(
+                "This version of mpv is not known to be compatible with changing the OSC visibility. "
+                "Please use mpv >=0.28.0.")
         if constants.MPV_NEW_VERSION:
             return NewMpvPlayer(client, MpvPlayer.getExpandedPath(playerPath), filePath, args)
         else:
@@ -35,7 +41,7 @@ class MpvPlayer(MplayerPlayer):
         args.extend(constants.MPV_SLAVE_ARGS)
         if constants.MPV_NEW_VERSION:
             args.extend(constants.MPV_SLAVE_ARGS_NEW)
-            args.extend([u"--script={}".format(findResourcePath("syncplayintf.lua"))])
+            args.extend(["--script={}".format(findResourcePath("syncplayintf.lua"))])
         return args
 
     @staticmethod
@@ -56,11 +62,11 @@ class MpvPlayer(MplayerPlayer):
     @staticmethod
     def getExpandedPath(playerPath):
         if not os.path.isfile(playerPath):
-            if os.path.isfile(playerPath + u"mpv.exe"):
-                playerPath += u"mpv.exe"
+            if os.path.isfile(playerPath + "mpv.exe"):
+                playerPath += "mpv.exe"
                 return playerPath
-            elif os.path.isfile(playerPath + u"\\mpv.exe"):
-                playerPath += u"\\mpv.exe"
+            elif os.path.isfile(playerPath + "\\mpv.exe"):
+                playerPath += "\\mpv.exe"
                 return playerPath
         if os.access(playerPath, os.X_OK):
             return playerPath
@@ -77,15 +83,16 @@ class MpvPlayer(MplayerPlayer):
     def getPlayerPathErrors(playerPath, filePath):
         return None
 
+
 class OldMpvPlayer(MpvPlayer):
     POSITION_QUERY = 'time-pos'
     OSD_QUERY = 'show_text'
 
     def _setProperty(self, property_, value):
-        self._listener.sendLine(u"no-osd set {} {}".format(property_, value))
+        self._listener.sendLine("no-osd set {} {}".format(property_, value))
 
     def setPaused(self, value):
-        if self._paused <> value:
+        if self._paused != value:
             self._paused = not self._paused
             self._listener.sendLine('cycle pause')
 
@@ -111,6 +118,7 @@ class OldMpvPlayer(MpvPlayer):
                     self.setPaused(self._client.getGlobalPaused())
                 self.setPosition(self._client.getGlobalPosition())
 
+
 class NewMpvPlayer(OldMpvPlayer):
     lastResetTime = None
     lastMPVPositionUpdate = None
@@ -120,19 +128,20 @@ class NewMpvPlayer(OldMpvPlayer):
     def displayMessage(self, message, duration=(constants.OSD_DURATION * 1000), OSDType=constants.OSD_NOTIFICATION,
                        mood=constants.MESSAGE_NEUTRAL):
         if not self._client._config["chatOutputEnabled"]:
-            super(self.__class__, self).displayMessage(message=message,duration=duration,OSDType=OSDType,mood=mood)
+            super(self.__class__, self).displayMessage(message=message, duration=duration, OSDType=OSDType, mood=mood)
             return
-        messageString = self._sanitizeText(message.replace("\\n", "<NEWLINE>")).replace("\\\\",constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER).replace("<NEWLINE>", "\\n")
-        self._listener.sendLine(u'script-message-to syncplayintf {}-osd-{} "{}"'.format(OSDType, mood, messageString))
+        messageString = self._sanitizeText(message.replace("\\n", "<NEWLINE>")).replace(
+            "\\\\", constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER).replace("<NEWLINE>", "\\n")
+        self._listener.sendLine('script-message-to syncplayintf {}-osd-{} "{}"'.format(OSDType, mood, messageString))
 
     def displayChatMessage(self, username, message):
         if not self._client._config["chatOutputEnabled"]:
-            super(self.__class__, self).displayChatMessage(username,message)
+            super(self.__class__, self).displayChatMessage(username, message)
             return
-        username = self._sanitizeText(username.replace("\\",constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER))
-        message = self._sanitizeText(message.replace("\\",constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER))
-        messageString = u"<{}> {}".format(username, message)
-        self._listener.sendLine(u'script-message-to syncplayintf chat "{}"'.format(messageString))
+        username = self._sanitizeText(username.replace("\\", constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER))
+        message = self._sanitizeText(message.replace("\\", constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER))
+        messageString = "<{}> {}".format(username, message)
+        self._listener.sendLine('script-message-to syncplayintf chat "{}"'.format(messageString))
 
     def setPaused(self, value):
         if self._paused == value:
@@ -147,33 +156,42 @@ class NewMpvPlayer(OldMpvPlayer):
     def _getProperty(self, property_):
         floatProperties = ['time-pos']
         if property_ in floatProperties:
-            propertyID = u"={}".format(property_)
+            propertyID = "={}".format(property_)
         elif property_ == 'length':
-            propertyID = u'=duration:${=length:0}'
+            propertyID = '=duration:${=length:0}'
         else:
             propertyID = property_
-        self._listener.sendLine(u"print_text ""ANS_{}=${{{}}}""".format(property_, propertyID))
+        self._listener.sendLine("print_text ""ANS_{}=${{{}}}""".format(property_, propertyID))
 
     def getCalculatedPosition(self):
         if self.fileLoaded == False:
-            self._client.ui.showDebugMessage("File not loaded so using GlobalPosition for getCalculatedPosition({})".format(self._client.getGlobalPosition()))
+            self._client.ui.showDebugMessage(
+                "File not loaded so using GlobalPosition for getCalculatedPosition({})".format(
+                    self._client.getGlobalPosition()))
             return self._client.getGlobalPosition()
 
         if self.lastMPVPositionUpdate is None:
-            self._client.ui.showDebugMessage("MPV not updated position so using GlobalPosition for getCalculatedPosition ({})".format(self._client.getGlobalPosition()))
+            self._client.ui.showDebugMessage(
+                "MPV not updated position so using GlobalPosition for getCalculatedPosition ({})".format(
+                    self._client.getGlobalPosition()))
             return self._client.getGlobalPosition()
 
         if self._recentlyReset():
-            self._client.ui.showDebugMessage("Recently reset so using self.position for getCalculatedPosition ({})".format(self._position))
+            self._client.ui.showDebugMessage(
+                "Recently reset so using self.position for getCalculatedPosition ({})".format(
+                    self._position))
             return self._position
 
         diff = time.time() - self.lastMPVPositionUpdate
 
         if diff > constants.MPV_UNRESPONSIVE_THRESHOLD:
-            self.reactor.callFromThread(self._client.ui.showErrorMessage, getMessage("mpv-unresponsive-error").format(int(diff)), True)
+            self.reactor.callFromThread(
+                self._client.ui.showErrorMessage, getMessage("mpv-unresponsive-error").format(int(diff)), True)
             self.drop()
         if diff > constants.PLAYER_ASK_DELAY and not self._paused:
-            self._client.ui.showDebugMessage("mpv did not response in time, so assuming position is {} ({}+{})".format(self._position + diff, self._position, diff))
+            self._client.ui.showDebugMessage(
+                "mpv did not response in time, so assuming position is {} ({}+{})".format(
+                    self._position + diff, self._position, diff))
             return self._position + diff
         else:
             return self._position
@@ -184,9 +202,10 @@ class NewMpvPlayer(OldMpvPlayer):
             self._client.ui.showDebugMessage("Recently reset, so storing position as 0")
             self._position = 0
         elif self._fileIsLoaded() or (value < constants.MPV_NEWFILE_IGNORE_TIME and self._fileIsLoaded(ignoreDelay=True)):
-            self._position = max(value,0)
+            self._position = max(value, 0)
         else:
-            self._client.ui.showDebugMessage("No file loaded so storing position as GlobalPosition ({})".format(self._client.getGlobalPosition()))
+            self._client.ui.showDebugMessage(
+                "No file loaded so storing position as GlobalPosition ({})".format(self._client.getGlobalPosition()))
             self._position = self._client.getGlobalPosition()
 
     def _storePauseState(self, value):
@@ -205,10 +224,11 @@ class NewMpvPlayer(OldMpvPlayer):
         self._getPausedAndPosition()
         self._positionAsk.wait(constants.MPV_LOCK_WAIT_TIME)
         self._pausedAsk.wait(constants.MPV_LOCK_WAIT_TIME)
-        self._client.updatePlayerStatus(self._paused if self.fileLoaded else self._client.getGlobalPaused(), self.getCalculatedPosition())
+        self._client.updatePlayerStatus(
+            self._paused if self.fileLoaded else self._client.getGlobalPaused(), self.getCalculatedPosition())
 
     def _getPausedAndPosition(self):
-        self._listener.sendLine(u"print_text ANS_pause=${pause}\r\nprint_text ANS_time-pos=${=time-pos}")
+        self._listener.sendLine("print_text ANS_pause=${pause}\r\nprint_text ANS_time-pos=${=time-pos}")
 
     def _preparePlayer(self):
         if self.delayedFilePath:
@@ -222,14 +242,15 @@ class NewMpvPlayer(OldMpvPlayer):
 
     def _loadFile(self, filePath):
         self._clearFileLoaded()
-        self._listener.sendLine(u'loadfile {}'.format(self._quoteArg(filePath)), notReadyAfterThis=True)
+        self._listener.sendLine('loadfile {}'.format(self._quoteArg(filePath)), notReadyAfterThis=True)
 
     def setFeatures(self, featureList):
         self.sendMpvOptions()
 
     def setPosition(self, value):
         if value < constants.DO_NOT_RESET_POSITION_THRESHOLD and self._recentlyReset():
-            self._client.ui.showDebugMessage("Did not seek as recently reset and {} below 'do not reset position' threshold".format(value))
+            self._client.ui.showDebugMessage(
+                "Did not seek as recently reset and {} below 'do not reset position' threshold".format(value))
             return
         super(self.__class__, self).setPosition(value)
         self.lastMPVPositionUpdate = time.time()
@@ -253,21 +274,21 @@ class NewMpvPlayer(OldMpvPlayer):
     def sendMpvOptions(self):
         options = []
         for option in constants.MPV_SYNCPLAYINTF_OPTIONS_TO_SEND:
-            options.append(u"{}={}".format(option, self._client._config[option]))
+            options.append("{}={}".format(option, self._client._config[option]))
         for option in constants.MPV_SYNCPLAYINTF_CONSTANTS_TO_SEND:
             options.append(option)
         for option in constants.MPV_SYNCPLAYINTF_LANGUAGE_TO_SEND:
-            options.append(u"{}={}".format(option, getMessage(option)))
-        options.append(u"OscVisibilityChangeCompatible={}".format(constants.MPV_OSC_VISIBILITY_CHANGE_VERSION))
+            options.append("{}={}".format(option, getMessage(option)))
+        options.append("OscVisibilityChangeCompatible={}".format(constants.MPV_OSC_VISIBILITY_CHANGE_VERSION))
         options_string = ", ".join(options)
-        self._listener.sendLine(u'script-message-to syncplayintf set_syncplayintf_options "{}"'.format(options_string))
+        self._listener.sendLine('script-message-to syncplayintf set_syncplayintf_options "{}"'.format(options_string))
         self._setOSDPosition()
 
     def _handleUnknownLine(self, line):
         self.mpvErrorCheck(line)
 
         if "<chat>" in line:
-            line = line.decode("utf-8").replace(constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER, "\\").encode("utf-8")
+            line = line.replace(constants.MPV_INPUT_BACKSLASH_SUBSTITUTE_CHARACTER, "\\")
             self._listener.sendChat(line[6:-7])
 
         if "<get_syncplayintf_options>" in line:
@@ -285,7 +306,14 @@ class NewMpvPlayer(OldMpvPlayer):
             self._listener.setReadyToSend(True)
 
     def _setOSDPosition(self):
-        if self._client._config['chatMoveOSD'] and (self._client._config['chatOutputEnabled'] or (self._client._config['chatInputEnabled'] and self._client._config['chatInputPosition'] == constants.INPUT_POSITION_TOP)):
+        if (
+            self._client._config['chatMoveOSD'] and (
+                self._client._config['chatOutputEnabled'] or (
+                    self._client._config['chatInputEnabled'] and
+                    self._client._config['chatInputPosition'] == constants.INPUT_POSITION_TOP
+                )
+            )
+        ):
             self._setProperty("osd-align-y", "bottom")
             self._setProperty("osd-margin-y", int(self._client._config['chatOSDMargin']))
 
@@ -309,9 +337,9 @@ class NewMpvPlayer(OldMpvPlayer):
     def _fileIsLoaded(self, ignoreDelay=False):
         if ignoreDelay:
             self._client.ui.showDebugMessage("Ignoring _fileIsLoaded MPV_NEWFILE delay")
-            return True if self.fileLoaded else False
+            return bool(self.fileLoaded)
 
-        if self.fileLoaded == True and self.lastLoadedTime != None and time.time() > (self.lastLoadedTime + constants.MPV_NEWFILE_IGNORE_TIME):
-            return True
-        else:
-            return False
+        return (
+            self.fileLoaded and self.lastLoadedTime is not None and
+            time.time() > (self.lastLoadedTime + constants.MPV_NEWFILE_IGNORE_TIME)
+        )

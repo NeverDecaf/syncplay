@@ -5,48 +5,33 @@ Usage:
     python setup.py py2app
 """
 
-from setuptools import setup, Command
+from setuptools import setup
 from glob import glob
-import shutil
 import syncplay
-
-cmdlist = {}
 
 APP = ['syncplayClient.py']
 DATA_FILES = [
     ('resources', glob('resources/*.png') + glob('resources/*.rtf') + glob('resources/*.lua')),
 ]
 OPTIONS = {
-	'iconfile':'resources/icon.icns',
-	'includes': {'PySide.QtCore', 'PySide.QtUiTools', 'PySide.QtGui'},
-   	'plist': {
-		'CFBundleName':'Syncplay',
-		'CFBundleShortVersionString':syncplay.version,
-		'CFBundleIdentifier':'pl.syncplay.Syncplay',
-		'NSHumanReadableCopyright': '@ 2017 Syncplay All Rights Reserved'
-	}
+    'iconfile': 'resources/icon.icns',
+    'extra_scripts': 'syncplayServer.py',
+    'includes': {'PySide2.QtCore', 'PySide2.QtUiTools', 'PySide2.QtGui', 'PySide2.QtWidgets', 'certifi'},
+    'excludes': {'PySide', 'PySide.QtCore', 'PySide.QtUiTools', 'PySide.QtGui'},
+    'qt_plugins': [
+        'platforms/libqcocoa.dylib',
+        'platforms/libqminimal.dylib',
+        'platforms/libqoffscreen.dylib',
+        'styles/libqmacstyle.dylib'
+    ],
+    'plist': {
+        'CFBundleName': 'Syncplay',
+        'CFBundleShortVersionString': syncplay.version,
+        'CFBundleIdentifier': 'pl.syncplay.Syncplay',
+        'LSMinimumSystemVersion': '10.11.0',
+        'NSHumanReadableCopyright': '@ 2018 Syncplay All Rights Reserved'
+    }
 }
-
-class Fix(Command):
-    user_options = []
-    
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-    
-    def trim_packages(self):
-        """Remove big files in external dependencies that Syncplay doesn't need"""
-
-        shutil.rmtree('dist/Syncplay.app/Contents/Frameworks/QtDesigner.framework', ignore_errors=True)
-        shutil.rmtree('dist/Syncplay.app/Contents/Frameworks/QtScript.framework', ignore_errors=True)
-        shutil.rmtree('dist/Syncplay.app/Contents/Frameworks/QtXml.framework', ignore_errors=True)
-
-    def run(self):
-        self.trim_packages()
-
-cmdlist['fix'] = Fix
 
 setup(
     app=APP,
@@ -54,5 +39,4 @@ setup(
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
-    cmdclass=cmdlist
 )
