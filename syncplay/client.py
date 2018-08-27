@@ -89,7 +89,7 @@ class DiscordPresence:
 
     def updateGame(self, filename, time_remaining):
         shortname = re.sub('\..{2,4}$','',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',filename))).strip()
-        self.RPC.update(details='Watching: {}'.format(shortname), end=time_remaining, instance=True, large_image="syncplay512")
+        self.RPC.update(details='{}'.format(shortname), end=time_remaining, instance=True, large_image="syncplay512")
 
     def close(self):
         self.RPC.clear()
