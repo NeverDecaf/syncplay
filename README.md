@@ -2,8 +2,7 @@
 Ability to skip recap, OP/ED and previews when watching (anime) files in a playlist.
 This option is only available in GUI mode with ffmpeg installed.
 
-Discord integration: will update your now playing status to reflect the file you are watching.
-https://github.com/TheRacingLion/Discord-SelfBot/wiki/Discord-Token-Tutorial
+Discord integration: Uses rich presence to show what file you are watching, enable from [x]Show more settings > Misc
 
 #  Syncplay
 
