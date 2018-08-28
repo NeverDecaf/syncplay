@@ -721,7 +721,6 @@ class build_installer(py2exe):
         script.create()
         print("*** compiling the NSIS setup script ***")
         script.compile()
-
         print("*** DONE ***")
 
 guiIcons = [
@@ -754,7 +753,6 @@ resources = [
     "resources/license.rtf",
     "resources/third-party-notices.rtf"
 ]
-resources.append("resources/cacert.pem")
 resources.extend(guiIcons)
 intf_resources = ["resources/lua/intf/syncplay.lua"]
 

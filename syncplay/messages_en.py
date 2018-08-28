@@ -416,6 +416,7 @@ en = {
     "skip-op-tooltip": "Attempt to skip anime opening and endings.",
     "skip-preview-tooltip": "Attempt to skip anime next episode previews.",
     "skip-recap-tooltip": "Attempt to skip anime episode recaps (last time on...).",
+    "skip-disabled-tooltip": "Install ffmpeg to enable automatic chapter skipping.",
     "autoplay-tooltip": "Auto-play when all users who have readiness indicator are ready and minimum user threshold met.",
     "switch-to-file-tooltip": "Double click to switch to {}",  # Filename
     "sendmessage-tooltip": "Send message to room",

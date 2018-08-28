@@ -1641,16 +1641,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def disableSkipOPButton(self):
         self.skipOPPushButton.blockSignals(True)
         self.skipOPPushButton.setEnabled(False)
+        self.skipOPPushButton.setToolTip(getMessage("skip-disabled-tooltip"))
         self.skipOPPushButton.blockSignals(False)
 
     def disableSkipPreviewButton(self):
         self.skipPreviewPushButton.blockSignals(True)
         self.skipPreviewPushButton.setEnabled(False)
+        self.skipPreviewPushButton.setToolTip(getMessage("skip-disabled-tooltip"))
         self.skipPreviewPushButton.blockSignals(False)
 
     def disableSkipRecapButton(self):
         self.skipRecapPushButton.blockSignals(True)
         self.skipRecapPushButton.setEnabled(False)
+        self.skipRecapPushButton.setToolTip(getMessage("skip-disabled-tooltip"))
         self.skipRecapPushButton.blockSignals(False)
         
     def updateSkipOPState(self, newState):

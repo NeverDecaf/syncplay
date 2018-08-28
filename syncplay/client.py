@@ -88,7 +88,8 @@ class DiscordPresence:
         self.RPC.connect()
 
     def updateGame(self, filename, time_remaining):
-        shortname = re.sub('\..{2,4}$','',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',filename))).strip()
+        # remove everything in (parens) or [brackets] then replace '_' with ' '
+        shortname = re.sub('\..{2,4}$','',re.sub('_',' ',re.sub('\([^\)]*\)','',re.sub('\[[^\]]*\]','',filename)))).strip()
         self.RPC.update(details='{}'.format(shortname), end=time_remaining, instance=True, large_image="syncplay512")
 
     def close(self):
@@ -283,7 +284,7 @@ class SyncplayClient(object):
                 )
             ):
                 pauseChange = self._toggleReady(pauseChange, paused)
-
+                
         # skip OP/ED
         autoSkip = False
         if self._protocol and self._playerPosition>1:
@@ -310,8 +311,6 @@ class SyncplayClient(object):
                 if seeked:
                     self.playerPositionBeforeLastSeek = self.getGlobalPosition()
                 self._protocol.sendState(self.getPlayerPosition(), self.getPlayerPaused(), seeked, None, True)
-
-
                 
     def prepareToAdvancePlaylist(self):
         if self.playlist.canSwitchToNextPlaylistIndex():
@@ -612,27 +611,27 @@ class SyncplayClient(object):
             if self.skipOP:
                 if constants.OP_LENGTH_RANGE[0] < chapterLengths[1] < constants.OP_LENGTH_RANGE[1]:
                     if self.skipRecap and constants.RECAP_LENGTH_RANGE[0] < chapterLengths[0] < constants.RECAP_LENGTH_RANGE[1]:
-                        self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[1]['end'])))
+                        self.chapterSkips.append([float(x) for x in (chapters[0]['start'],chapters[1]['end'])])
                     else:
-                        self.chapterSkips.append(map(float,(chapters[1]['start'],chapters[1]['end'])))
+                        self.chapterSkips.append([float(x) for x in (chapters[1]['start'],chapters[1]['end'])])
                 elif constants.OP_LENGTH_RANGE[0] < chapterLengths[0] < constants.OP_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[0]['start'],chapters[0]['end'])])
                 elif self.skipRecap and constants.RECAP_LENGTH_RANGE[0] < chapterLengths[0] < constants.RECAP_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[0]['start'],chapters[0]['end'])])
                 if constants.ED_LENGTH_RANGE[0] < chapterLengths[-2] < constants.ED_LENGTH_RANGE[1]:# and chapterLengths[-1] < chapterLengths[-2]:
                     if self.skipPreview and constants.PREVIEW_LENGTH_RANGE[0] < chapterLengths[-1] < constants.PREVIEW_LENGTH_RANGE[1]:
-                        self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-1]['end'])))
+                        self.chapterSkips.append([float(x) for x in (chapters[-2]['start'],chapters[-1]['end'])])
                     else:
-                        self.chapterSkips.append(map(float,(chapters[-2]['start'],chapters[-2]['end'])))
+                        self.chapterSkips.append([float(x) for x in (chapters[-2]['start'],chapters[-2]['end'])])
                 elif constants.ED_LENGTH_RANGE[0] < chapterLengths[-1] < constants.ED_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[-1]['start'],chapters[-1]['end'])])
                 elif self.skipPreview and constants.PREVIEW_LENGTH_RANGE[0] < chapterLengths[-1] < constants.PREVIEW_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[-1]['start'],chapters[-1]['end'])])
             else:
                 if self.skipRecap and constants.RECAP_LENGTH_RANGE[0] < chapterLengths[0] < constants.RECAP_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[0]['start'],chapters[0]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[0]['start'],chapters[0]['end'])])
                 if self.skipPreview and constants.PREVIEW_LENGTH_RANGE[0] < chapterLengths[-1] < constants.PREVIEW_LENGTH_RANGE[1]:
-                    self.chapterSkips.append(map(float,(chapters[-1]['start'],chapters[-1]['end'])))
+                    self.chapterSkips.append([float(x) for x in (chapters[-1]['start'],chapters[-1]['end'])])
 
     def __getChapterData(self, filePath):
         chapters = []
