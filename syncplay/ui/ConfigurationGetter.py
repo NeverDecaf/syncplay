@@ -354,7 +354,7 @@ class ConfigurationGetter(object):
     def _getXdgConfigHome(self):
         path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
         if not os.path.isdir(path):
-            os.mkdir(path, 0o755)
+            os.mkdir(path, 0o700)
         return path
 
     def _parseConfigFile(self, iniPath, createConfig=True):
@@ -498,6 +498,11 @@ class ConfigurationGetter(object):
                     import appnope
                     appnope.nope()
             except ImportError:
+                try:
+                    from twisted.trial import unittest
+                except:
+                    print(getMessage("unable-import-twisted-error"))
+                    sys.exit()
                 print(getMessage("unable-import-gui-error"))
                 self._config['noGui'] = True
         if self._config['file'] and self._config['file'][:2] == "--":
