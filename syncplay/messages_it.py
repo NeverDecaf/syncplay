@@ -16,6 +16,7 @@ it = {
     "connection-failed-notification": "Connessione col server fallita",
     "connected-successful-notification": "Connessione al server effettuata con successo",
     "retrying-notification": "%s, Nuovo tentativo in %d secondi...",  # Seconds
+    "handshake-successful-notification": "Connessione stabilita con {} ({})",
 
     "rewind-notification": "Riavvolgo a causa della differenza temporale con {}",  # User
     "fastforward-notification": "Avanzamento rapido a causa della differenza temporale con {}",  # User
@@ -93,10 +94,7 @@ it = {
     "language-changed-msgbox-label": "La lingua sarà cambiata quando avvierai Syncplay.",
     "promptforupdate-label": "Ti piacerebbe che, di tanto in tanto, Syncplay controllasse automaticamente la presenza di aggiornamenti?",
 
-    "vlc-interface-version-mismatch": "Stai eseguendo la versione {} del modulo di interfaccia per VLC di Syncplay, ma Syncplay è progettato per essere utilizzato con la versione {} o superiore. Per favore, fai riferimento alla User Guide di Syncplay presso https://syncplay.pl/guide/ per istruzioni su come installare syncplay.lua.",  # VLC interface version, VLC interface min version
-    "vlc-interface-oldversion-warning": "Attenzione: Syncplay ha rilevato una vecchia versione del modulo di interfaccia per VLC di Syncplay installata nella cartella di VLC. Per favore, fai riferimento alla User Guide di Syncplay presso https://syncplay.pl/guide/ per istruzioni su come installare syncplay.lua.",
     "media-player-latency-warning": "Attenzione: il media player ha impiegato {} secondi per rispondere. Se stai avendo problemi di sincronizzazione, chiudi delle applicazioni per liberare le risorse di sistema e, se ciò non dovesse avere alcun effetto, prova un altro media player.",  # Seconds to respond
-    "vlc-interface-not-installed": "Attenzione: il modulo di interfaccia per VLC di Syncplay non è stato trovato nella cartella di VLC. Se stai utilizzando VLC 2.0, VLC userà il modulo syncplay.lua contenuto nella cartella di Syncplay, ma ciò significa che altri custom script di interfaccia ed estensioni non funzioneranno. Per favore, fai riferimento alla User Guide di Syncplay presso https://syncplay.pl/guide/ per istruzioni su come installare syncplay.lua.",
     "mpv-unresponsive-error": "mpv non ha risposto per {} secondi, quindi sembra non funzionare correttamente. Per favore, riavvia Syncplay.",  # Seconds to respond
 
     # Client prompts
@@ -447,6 +445,7 @@ it = {
     # Server errors
     "unknown-command-server-error": "Comando non riconosciuto {}",  # message
     "not-json-server-error": "Non è una stringa in codifica JSON {}",  # message
+    "line-decode-server-error": "Not a utf-8 string", # TODO: Translate
     "not-known-server-error": "Devi essere autenticato dal server prima di poter inviare questo comando",
     "client-drop-server-error": "Il client è caduto: {} -- {}",  # host, error
     "password-required-server-error": "È richiesta una password",

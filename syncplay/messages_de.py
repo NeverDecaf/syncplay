@@ -16,6 +16,7 @@ de = {
     "connection-failed-notification": "Verbindung zum Server fehlgeschlagen",
     "connected-successful-notification": "Erfolgreich mit Server verbunden",
     "retrying-notification": "%s, versuche erneut in %d Sekunden...",  # Seconds
+    "handshake-successful-notification": "Connection established with {} ({})", # TODO: Translate
 
     "rewind-notification": "Zurückgespult wegen Zeitdifferenz mit {}",  # User
     "fastforward-notification": "Vorgespult wegen Zeitdifferenz mit {}",  # User
@@ -93,10 +94,6 @@ de = {
     "language-changed-msgbox-label": "Die Sprache wird geändert, wenn du Syncplay neu startest.",
     "promptforupdate-label": "Soll Syncplay regelmäßig nach Updates suchen?",
 
-    "vlc-version-mismatch": "This version of VLC does not support Syncplay. VLC {}+ supports Syncplay but VLC 3 does not. Please use an alternative media player.",  # VLC min version # TODO: Translate
-    "vlc-interface-version-mismatch": "Du nutzt Version {} des VLC-Syncplay Interface-Moduls, Syncplay benötigt aber mindestens Version {}. In der Syncplay-Anleitung unter https://syncplay.pl/guide/ [Englisch] findest du Details zur Installation des syncplay.lua-Skripts.",  # VLC interface version, VLC interface min version
-    "vlc-interface-oldversion-warning": "Warnung: Es ist eine alte Version des Syncplay Interface-Moduls für VLC im VLC-Verzeichnis installiert. In der Syncplay-Anleitung unter https://syncplay.pl/guide/ [Englisch] findest du Details zur Installation des syncplay.lua-Skripts.",
-    "vlc-interface-not-installed": "Warnung: Es wurde kein Syncplay Interface-Modul für VLC im VLC-Verzeichnis gefunden. Daher wird, wenn du VLC 2.0 nutzt, die syncplay.lua die mit Syncplay mitgeliefert wurde, verwendet. Dies bedeutet allerdings, dass keine anderen Interface-Skripts und Erweiterungen geladen werden. In der Syncplay-Anleitung unter https://syncplay.pl/guide/ [Englisch] findest du  Details zur Installation des syncplay.lua-Skripts.",
     "media-player-latency-warning": "Warnung: Der Mediaplayer brauchte {} Sekunden zum Antworten. Wenn Probleme bei der Synchronisation auftreten, schließe bitte andere Anwendungen, um Ressourcen freizugeben. Sollte das nicht funktionieren, versuche es mit einem anderen Media-Player.",  # Seconds to respond
     "mpv-unresponsive-error": "MPV hat für {} Sekunden nicht geantwortet und scheint abgestürzt zu sein. Bitte starte Syncplay neu.",  # Seconds to respond
 
@@ -133,8 +130,12 @@ de = {
     "version-mismatch-error": "Verschiedene Versionen auf Client und Server\n",
     "vlc-failed-connection": "Kann nicht zu VLC verbinden. Wenn du syncplay.lua nicht installiert hast, findest du auf https://syncplay.pl/LUA/ [Englisch] eine Anleitung.",
     "vlc-failed-noscript": "Laut VLC ist das syncplay.lua Interface-Skript nicht installiert. Auf https://syncplay.pl/LUA/ [Englisch] findest du eine Anleitung.",
+
     "vlc-failed-versioncheck": "Diese VLC-Version wird von Syncplay nicht unterstützt. Bitte nutze VLC 2.0",
-    "vlc-failed-other": "Beim Laden des syncplay.lua Interface-Skripts durch VLC trat folgender Fehler auf: {}",  # Syncplay Error
+    "feature-sharedPlaylists": "shared playlists",  # used for not-supported-by-server-error # TODO: Translate
+    "feature-chat": "chat",  # used for not-supported-by-server-error # TODO: Translate
+    "feature-readiness": "readiness",  # used for not-supported-by-server-error # TODO: Translate
+    "feature-managedRooms": "managed rooms",  # used for not-supported-by-server-error # TODO: Translate
 
     "not-supported-by-server-error": "Dieses Feature wird vom Server nicht unterstützt. Es wird ein Server mit Syncplay Version {}+ benötigt, aktuell verwendet wird jedoch Version {}.",  # minVersion, serverVersion
     "shared-playlists-not-supported-by-server-error": "The shared playlists feature may not be supported by the server. To ensure that it works correctly requires a server running Syncplay  {}+, but the server is running Syncplay {}.",  # minVersion, serverVersion # TODO: Translate
@@ -443,6 +444,7 @@ de = {
     # Server errors
     "unknown-command-server-error": "Unbekannter Befehl {}",  # message
     "not-json-server-error": "Kein JSON-String {}",  # message
+    "line-decode-server-error": "Not a utf-8 string",  # TODO: Translate
     "not-known-server-error": "Der Server muss dich kennen, bevor du diesen Befehl nutzen kannst",
     "client-drop-server-error": "Client verloren: {} -- {}",  # host, error
     "password-required-server-error": "Passwort nötig",

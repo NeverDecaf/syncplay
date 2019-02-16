@@ -1,0 +1,62 @@
+environment:
+  MINICONDA: "C:\\Miniconda"
+  PYTHON: "C:\\Python35"
+  PYTHON_VERSION: 3.5
+  PYTHON_ARCH: 32
+
+platform: x86
+
+configuration: Release
+
+init:
+  - set PYTHONPATH=%PYTHON%
+  - set PYTHONHOME=%PYTHON%
+  - set PATH=%PYTHON%\Scripts;%PYTHON%;C:\Program Files (x86)\NSIS;%PATH%
+  - python --version
+  - python -m pip install -U pip setuptools wheel
+  - pip install -U pypiwin32==219
+  - pip install twisted
+  - pip install zope.interface
+  - type nul > %PYTHON%\lib\site-packages\zope\__init__.py
+  - curl -L https://bintray.com/alby128/Syncplay/download_file?file_path=py2exe-0.9.2.2-py33.py34.py35-none-any.whl -o py2exe-0.9.2.2-py33.py34.py35-none-any.whl
+  - pip install py2exe-0.9.2.2-py33.py34.py35-none-any.whl
+  - del py2exe-0.9.2.2-py33.py34.py35-none-any.whl
+  - pip install PySide2==5.11.1
+  - pip freeze
+  
+install:
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - for /F "tokens=2 delims='" %%a in ('findstr version syncplay\__init__.py') do @set ver=%%a
+  - python buildPy2exe.py
+  - type nul > syncplay_v%ver%\syncplay.ini
+  - copy resources\win_lua_note.txt syncplay_v%ver%\"VLC LUA Script installation.txt"
+
+# Not a project with an msbuild file, build done at install.
+build: off
+
+artifacts:
+  - path: 'syncplay_v$(ver)'
+    type: zip
+    name: Syncplay_$(ver)_Portable
+
+  - path: Syncplay-$(ver)-Setup.exe
+    name: Syncplay-$(ver)-Setup
+
+# Push artefact to S3 bucket and list all
+before_deploy:
+  - dir
+  #- python -c "from PySide2 import QtCore; print QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.PluginsPath)"
+
+
+# Deploy build to BinTray
+deploy:
+  provider: BinTray
+  username: etoh
+  api_key: 
+    secure: TfwB161OlDOcAz5nnmjtNjDmJw2KyCz/uB1KzN4r5/9AL3uczWNuY+k6qVGaRvOP
+  repo: Syncplay
+  package: Syncplay
+  subject: syncplay
+  version: v$(ver)
+  publish: true
+  override: true

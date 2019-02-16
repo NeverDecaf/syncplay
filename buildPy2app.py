@@ -28,8 +28,8 @@ OPTIONS = {
         'CFBundleName': 'Syncplay',
         'CFBundleShortVersionString': syncplay.version,
         'CFBundleIdentifier': 'pl.syncplay.Syncplay',
-        'LSMinimumSystemVersion': '10.11.0',
-        'NSHumanReadableCopyright': '@ 2018 Syncplay All Rights Reserved'
+        'LSMinimumSystemVersion': '10.12.0',
+        'NSHumanReadableCopyright': 'Copyright © 2019 Syncplay All Rights Reserved'
     }
 }
 

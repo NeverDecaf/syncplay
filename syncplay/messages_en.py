@@ -16,6 +16,7 @@ en = {
     "connection-failed-notification": "Connection with server failed",
     "connected-successful-notification": "Successfully connected to server",
     "retrying-notification": "%s, Retrying in %d seconds...",  # Seconds
+    "handshake-successful-notification": "Connection established with {} ({})",
 
     "rewind-notification": "Rewinded due to time difference with {}",  # User
     "fastforward-notification": "Fast-forwarded due to time difference with {}",  # User
@@ -93,9 +94,6 @@ en = {
     "language-changed-msgbox-label": "Language will be changed when you run Syncplay.",
     "promptforupdate-label": "Is it okay for Syncplay to automatically check for updates from time to time?",
 
-    "vlc-interface-version-mismatch": "You are running version {} of the Syncplay interface module for VLC, but Syncplay is designed to run with version {} and above.  Please refer to the Syncplay User Guide at https://syncplay.pl/guide/ for instructions on how to install syncplay.lua.",  # VLC interface version, VLC interface min version
-    "vlc-interface-oldversion-warning": "Warning: Syncplay detected that an old version version of the Syncplay interface module for VLC was installed in the VLC directory. Please refer to the Syncplay User Guide at https://syncplay.pl/guide/ for instructions on how to install syncplay.lua.",
-    "vlc-interface-not-installed": "Warning: The Syncplay interface module for VLC was not found in the VLC directory. As such, if you are running VLC 2.0 then VLC will use the syncplay.lua module contained within the Syncplay directory, but this will mean that other custom interface scripts and extensions will not work. Please refer to the Syncplay User Guide at https://syncplay.pl/guide/ for instructions on how to install syncplay.lua.",
     "media-player-latency-warning": "Warning: The media player took {} seconds to respond. If you experience syncing issues then close applications to free up system resources, and if that doesn't work then try a different media player.",  # Seconds to respond
     "mpv-unresponsive-error": "mpv has not responded for {} seconds so appears to have malfunctioned. Please restart Syncplay.",  # Seconds to respond
 
@@ -457,6 +455,7 @@ en = {
     # Server errors
     "unknown-command-server-error": "Unknown command {}",  # message
     "not-json-server-error": "Not a json encoded string {}",  # message
+    "line-decode-server-error": "Not a utf-8 string",
     "not-known-server-error": "You must be known to server before sending this command",
     "client-drop-server-error": "Client drop: {} -- {}",  # host, error
     "password-required-server-error": "Password required",

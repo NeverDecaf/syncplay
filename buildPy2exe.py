@@ -95,8 +95,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
   LangString ^SyncplayLanguage $${LANG_ENGLISH} "en"
   LangString ^Associate $${LANG_ENGLISH} "Associate Syncplay with multimedia files."
-  LangString ^VLC $${LANG_ENGLISH} "Install Syncplay interface for VLC 2 and above"
-  LangString ^BrowseVLCBtn $${LANG_ENGLISH} "Select VLC folder"
   LangString ^Shortcut $${LANG_ENGLISH} "Create Shortcuts in following locations:"
   LangString ^StartMenu $${LANG_ENGLISH} "Start Menu"
   LangString ^Desktop $${LANG_ENGLISH} "Desktop"
@@ -106,8 +104,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
   LangString ^SyncplayLanguage $${LANG_POLISH} "pl"
   LangString ^Associate $${LANG_POLISH} "Skojarz Syncplaya z multimediami"
-  LangString ^VLC $${LANG_POLISH} "Zainstaluj interface Syncplaya dla VLC 2+"
-  LangString ^BrowseVLCBtn $${LANG_POLISH} "Określ folder VLC"
   LangString ^Shortcut $${LANG_POLISH} "Utworz skroty w nastepujacych miejscach:"
   LangString ^StartMenu $${LANG_POLISH} "Menu Start"
   LangString ^Desktop $${LANG_POLISH} "Pulpit"
@@ -116,8 +112,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
   LangString ^SyncplayLanguage $${LANG_RUSSIAN} "ru"
   LangString ^Associate $${LANG_RUSSIAN} "Ассоциировать Syncplay с видеофайлами"
-  LangString ^VLC $${LANG_RUSSIAN} "Установить интерфейс Syncplay для VLC 2+"
-  LangString ^BrowseVLCBtn $${LANG_RUSSIAN} "Укажите папку VLC"
   LangString ^Shortcut $${LANG_RUSSIAN} "Создать ярлыки:"
   LangString ^StartMenu $${LANG_RUSSIAN} "в меню Пуск"
   LangString ^Desktop $${LANG_RUSSIAN} "на рабочем столе"
@@ -127,9 +121,7 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
   LangString ^SyncplayLanguage $${LANG_GERMAN} "de"
   LangString ^Associate $${LANG_GERMAN} "Syncplay als Standardprogramm für Multimedia-Dateien verwenden."
-  LangString ^VLC $${LANG_GERMAN} "Syncplay-Interface für VLC installieren (ab VLC 2+)"
   LangString ^Shortcut $${LANG_GERMAN} "Erstelle Verknüpfungen an folgenden Orten:"
-  LangString ^BrowseVLCBtn $${LANG_GERMAN} "VLC-Ordner wählen"
   LangString ^StartMenu $${LANG_GERMAN} "Startmenü"
   LangString ^Desktop $${LANG_GERMAN} "Desktop"
   LangString ^QuickLaunchBar $${LANG_GERMAN} "Schnellstartleiste"
@@ -138,8 +130,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
   LangString ^SyncplayLanguage $${LANG_ITALIAN} "it"
   LangString ^Associate $${LANG_ITALIAN} "Associa Syncplay con i file multimediali."
-  LangString ^VLC $${LANG_ITALIAN} "Installa l'interfaccia di Syncplay per VLC 2+"
-  LangString ^BrowseVLCBtn $${LANG_ITALIAN} "Cartella di VLC"
   LangString ^Shortcut $${LANG_ITALIAN} "Crea i collegamenti nei percorsi seguenti:"
   LangString ^StartMenu $${LANG_ITALIAN} "Menu Start"
   LangString ^Desktop $${LANG_ITALIAN} "Desktop"
@@ -163,19 +153,16 @@ NSIS_SCRIPT_TEMPLATE = r"""
   Var Icon_Syncplay
   Var Icon_Syncplay_Handle
   ;Var CheckBox_Associate
-  Var CheckBox_VLC
   Var CheckBox_AutomaticUpdates
   Var CheckBox_StartMenuShortcut
   Var CheckBox_DesktopShortcut
   Var CheckBox_QuickLaunchShortcut
   ;Var CheckBox_Associate_State
-  Var CheckBox_VLC_State
   Var CheckBox_AutomaticUpdates_State
   Var CheckBox_StartMenuShortcut_State
   Var CheckBox_DesktopShortcut_State
   Var CheckBox_QuickLaunchShortcut_State
   Var Button_Browse
-  Var Button_Browse_VLC
   Var Directory
   Var GroupBox_DirSub
   Var Label_Text
@@ -234,8 +221,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
 
     ;StrCpy $$CheckBox_Associate_State $${BST_CHECKED}
     StrCpy $$CheckBox_StartMenuShortcut_State $${BST_CHECKED}
-    Call GetVLCDir
-    Call UpdateVLCCheckbox
 
     Call GetSize
     Call DriveSpace
@@ -297,38 +282,26 @@ NSIS_SCRIPT_TEMPLATE = r"""
     ;$${NSD_CreateCheckBox} 8u 59u 187u 10u "$$(^Associate)"
     ;Pop $$CheckBox_Associate
 
-    $${NSD_CreateBrowseButton} 185u 70u 70u 14u "$$(^BrowseVLCBtn)"
-    Pop $$Button_Browse_VLC
-    $${NSD_OnClick} $$Button_Browse_VLC DirectoryBrowseDialogVLC
-
-    $${NSD_CreateCheckBox} 8u 72u 250u 10u "$$(^VLC)"
-    Pop $$CheckBox_VLC
-
-    $${NSD_CreateCheckBox} 8u 85u 250u 10u "$$(^AutomaticUpdates)"
+    $${NSD_CreateCheckBox} 8u 72u 250u 10u "$$(^AutomaticUpdates)"
     Pop $$CheckBox_AutomaticUpdates
     $${NSD_Check} $$CheckBox_AutomaticUpdates
 
-    $${NSD_CreateLabel} 8u 98u 187u 10u "$$(^Shortcut)"
+    $${NSD_CreateLabel} 8u 95u 187u 10u "$$(^Shortcut)"
     Pop $$Label_Shortcut
 
-    $${NSD_CreateCheckbox} 8u 111u 60u 10u "$$(^StartMenu)"
+    $${NSD_CreateCheckbox} 8u 105u 60u 10u "$$(^StartMenu)"
     Pop $$CheckBox_StartMenuShortcut
 
-    $${NSD_CreateCheckbox} 78u 111u 70u 10u "$$(^Desktop)"
+    $${NSD_CreateCheckbox} 78u 105u 70u 10u "$$(^Desktop)"
     Pop $$CheckBox_DesktopShortcut
 
-    $${NSD_CreateCheckbox} 158u 111u 130u 10u "$$(^QuickLaunchBar)"
+    $${NSD_CreateCheckbox} 158u 105u 130u 10u "$$(^QuickLaunchBar)"
     Pop $$CheckBox_QuickLaunchShortcut
 
     ;$${If} $$CheckBox_Associate_State == $${BST_CHECKED}
     ;  $${NSD_Check} $$CheckBox_Associate
     ;$${EndIf}
 
-    $${If} $$CheckBox_VLC_State == $${BST_CHECKED}
-      $${NSD_Check} $$CheckBox_VLC
-    $${EndIf}
-
-    Call UpdateVLCCheckbox
 
     $${If} $$CheckBox_StartMenuShortcut_State == $${BST_CHECKED}
       $${NSD_Check} $$CheckBox_StartMenuShortcut
@@ -355,7 +328,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
   Function DirectoryCustomLeave
     $${NSD_GetText} $$Text_Directory $$INSTDIR
     ;$${NSD_GetState} $$CheckBox_Associate $$CheckBox_Associate_State
-    $${NSD_GetState} $$CheckBox_VLC $$CheckBox_VLC_State
     $${NSD_GetState} $$CheckBox_AutomaticUpdates $$CheckBox_AutomaticUpdates_State
     $${NSD_GetState} $$CheckBox_StartMenuShortcut $$CheckBox_StartMenuShortcut_State
     $${NSD_GetState} $$CheckBox_DesktopShortcut $$CheckBox_DesktopShortcut_State
@@ -370,47 +342,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
     $${NSD_SetText} $$Text_Directory $$INSTDIR
     Call DriveSpace
     $${NSD_SetText} $$Label_Space "$$(^SpaceAvailable)$$AvailibleSpaceGiB.$$AvailibleSpaceGB"
-    $${EndIf}
-    Abort
-  FunctionEnd
-
-  Function GetVLCDir
-    IfFileExists "$$VLC_Directory\vlc.exe" VLCFound 0
-    ReadRegStr $$VLC_Directory HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "VLCInstallLocation"
-    IfFileExists "$$VLC_Directory\vlc.exe" VLCFound 0
-    ReadRegStr $$VLC_Directory HKLM "Software\VideoLAN\VLC" "InstallDir"
-    IfFileExists "$$VLC_Directory\vlc.exe" VLCFound 0
-    StrCpy $$VLC_Directory "c:\program files (x86)\videolan\vlc"
-    IfFileExists "$$VLC_Directory\vlc.exe" VLCFound 0
-    StrCpy $$VLC_Directory "c:\program files\videolan\vlc"
-    IfFileExists "$$VLC_Directory\vlc.exe" VLCFound 0
-    StrCpy $$VLC_Directory ""
-    VLCFound:
-  FunctionEnd
-
-  Function UpdateVLCCheckbox
-    IfFileExists "$$VLC_Directory\vlc.exe" VLC_Enabled VLC_Disabled
-
-    VLC_Enabled:
-    EnableWindow $$CheckBox_VLC 1
-    StrCpy $$CheckBox_VLC_State $${BST_CHECKED}
-    $${NSD_SetState} $$CheckBox_VLC $$CheckBox_VLC_State
-    goto CheckboxUpdated
-
-    VLC_Disabled:
-    EnableWindow $$CheckBox_VLC 0
-    StrCpy $$CheckBox_VLC_State $${BST_UNCHECKED}
-    $${NSD_SetState} $$CheckBox_VLC $$CheckBox_VLC_State
-
-    CheckboxUpdated:
-  FunctionEnd
-
-  Function DirectoryBrowseDialogVLC
-    nsDialogs::SelectFolderDialog $$(^BrowseVLCBtn) $$VLC_Directory
-    Pop $$Directory
-    $${If} $$Directory != error
-    StrCpy $$VLC_Directory $$Directory
-    Call UpdateVLCCheckbox
     $${EndIf}
     Abort
   FunctionEnd
@@ -452,13 +383,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
     $${If} $$CheckBox_QuickLaunchShortcut_State == $${BST_CHECKED}
       CreateShortCut "$$QUICKLAUNCH\Syncplay.lnk" "$$INSTDIR\Syncplay.exe" ""
     $${EndIf}
-
-    $${If} $$CheckBox_VLC_State == $${BST_CHECKED}
-    IfFileExists "$$VLC_Directory\vlc.exe" 0 EndOfVLC
-      SetOutPath $$VLC_Directory\lua\intf
-      File resources\lua\intf\syncplay.lua
-      EndOfVLC:
-    $${EndIf}
   FunctionEnd
 
   ;Associates extensions with Syncplay
@@ -494,7 +418,6 @@ NSIS_SCRIPT_TEMPLATE = r"""
     WriteRegStr HKLM SOFTWARE\Syncplay "Install_Dir" "$$INSTDIR"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "DisplayName" "Syncplay"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "InstallLocation" "$$INSTDIR"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "VLCInstallLocation" "$$VLC_Directory"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "UninstallString" '"$$INSTDIR\uninstall.exe"'
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "DisplayIcon" "$$INSTDIR\resources\icon.ico"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Syncplay" "Publisher" "Syncplay"
@@ -682,13 +605,15 @@ def pruneUnneededLibraries():
                        'PySide2.QtPositioning.pyd', 'PySide2.QtPrintSupport.pyd', 'PySide2.QtQml.pyd',
                        'PySide2.QtQuick.pyd', 'PySide2.QtQuickWidgets.pyd', 'PySide2.QtScxml.pyd', 'PySide2.QtSensors.pyd',
                        'PySide2.QtSql.pyd', 'PySide2.QtSvg.pyd', 'PySide2.QtTest.pyd', 'PySide2.QtTextToSpeech.pyd',
-                       'PySide2.QtUiTools.pyd', 'PySide2.QtWebChannel.pyd', 'PySide2.QtWebSockets.pyd',
+                       'PySide2.QtUiTools.pyd', 'PySide2.QtWebChannel.pyd', 'PySide2.QtWebEngine.pyd',
+                       'PySide2.QtWebEngineCore.pyd', 'PySide2.QtWebEngineWidgets.pyd', 'PySide2.QtWebSockets.pyd',
                        'PySide2.QtWinExtras.pyd', 'PySide2.QtXml.pyd', 'PySide2.QtXmlPatterns.pyd']
     unneededLibs = ['Qt53D*', 'Qt5Charts.dll', 'Qt5Concurrent.dll', 'Qt5DataVisualization.dll', 'Qt5Gamepad.dll', 'Qt5Help.dll',
                     'Qt5Location.dll', 'Qt5Multimedia.dll', 'Qt5MultimediaWidgets.dll', 'Qt5OpenGL.dll', 'Qt5Positioning.dll',
                     'Qt5PrintSupport.dll', 'Qt5Quick.dll', 'Qt5QuickWidgets.dll', 'Qt5Scxml.dll', 'Qt5Sensors.dll', 'Qt5Sql.dll',
-                    'Qt5Svg.dll', 'Qt5Test.dll', 'Qt5TextToSpeech.dll', 'Qt5WebChannel.dll', 'Qt5WebSockets.dll', 'Qt5WinExtras.dll',
-                    'Qt5Xml.dll', 'Qt5XmlPatterns.dll']
+                    'Qt5Svg.dll', 'Qt5Test.dll', 'Qt5TextToSpeech.dll', 'Qt5WebChannel.dll', 'Qt5WebEngine.dll',
+                    'Qt5WebEngineCore.dll', 'Qt5WebEngineWidgets.dll', 'Qt5WebSockets.dll', 'Qt5WinExtras.dll', 'Qt5Xml.dll',
+                    'Qt5XmlPatterns.dll']
     windowsDLL = ['MSVCP140.dll', 'VCRUNTIME140.dll']
     deleteList = unneededModules + unneededLibs + windowsDLL
     deleteList.append('api-*')
@@ -781,8 +706,8 @@ info = dict(
         'py2exe': {
             'dist_dir': OUT_DIR,
             'packages': 'PySide2',
-            'includes': 'twisted, sys, encodings, datetime, os, time, math, liburl, ast, unicodedata, _ssl',
-            'excludes': 'venv, doctest, pdb, unittest, win32clipboard, win32file, win32pdh, win32security, win32trace, win32ui, winxpgui, win32pipe, win32process, Tkinter',
+            'includes': 'twisted, sys, encodings, datetime, os, time, math, liburl, ast, unicodedata, _ssl, win32pipe, win32file',
+            'excludes': 'venv, doctest, pdb, unittest, win32clipboard, win32pdh, win32security, win32trace, win32ui, winxpgui, win32process, Tkinter',
             'dll_excludes': 'msvcr71.dll, MSVCP90.dll, POWRPROF.dll',
             'optimize': 2,
             'compressed': 1
