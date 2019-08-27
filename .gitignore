@@ -16,4 +16,3 @@ dist.7z
 !.travis.yml
 !.appveyor.yml
 __pycache__
-/env
