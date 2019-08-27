@@ -4,8 +4,9 @@
 *.URL
 venv
 
-/SyncPlay.egg-info
+/*.egg-info
 /build
+/cert
 /dist
 /syncplay_v*
 /test

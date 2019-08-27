@@ -10,6 +10,13 @@ from twisted.enterprise import adbapi
 from twisted.internet import task, reactor
 from twisted.internet.protocol import Factory
 
+try:
+    from OpenSSL import crypto
+    from OpenSSL.SSL import TLSv1_2_METHOD
+    from twisted.internet import ssl
+except:
+    pass
+
 import syncplay
 from syncplay import constants
 from syncplay.messages import getMessage
@@ -20,7 +27,7 @@ from syncplay.utils import RoomPasswordProvider, NotControlledRoom, RandomString
 class SyncFactory(Factory):
     def __init__(self, port='', password='', motdFilePath=None, isolateRooms=False, salt=None,
                  disableReady=False, disableChat=False, maxChatMessageLength=constants.MAX_CHAT_MESSAGE_LENGTH,
-                 maxUsernameLength=constants.MAX_USERNAME_LENGTH, statsDbFile=None):
+                 maxUsernameLength=constants.MAX_USERNAME_LENGTH, statsDbFile=None, tlsCertPath=None):
         self.isolateRooms = isolateRooms
         print(getMessage("welcome-server-notification").format(syncplay.version))
         self.port = port
@@ -48,6 +55,14 @@ class SyncFactory(Factory):
             self._statsRecorder.startRecorder(statsDelay)
         else:
             self._statsDbHandle = None
+        if tlsCertPath is not None:
+            self.certPath = tlsCertPath
+            self._TLSattempts = 0
+            self._allowTLSconnections(self.certPath)
+        else:
+            self.certPath = None
+            self.options = None
+            self.serverAcceptsTLS = False
 
     def buildProtocol(self, addr):
         return SyncServerProtocol(self)
@@ -169,7 +184,7 @@ class SyncFactory(Factory):
             self._roomManager.broadcastRoom(watcher, lambda w: w.sendControlledRoomAuthStatus(False, watcher.getName(), room._name))
 
     def sendChat(self, watcher, message):
-        message = truncateText(message, constants.MAX_CHAT_MESSAGE_LENGTH)
+        message = truncateText(message, self.maxChatMessageLength)
         messageDict = {"message": message, "username": watcher.getName()}
         self._roomManager.broadcastRoom(watcher, lambda w: w.sendChatMessage(messageDict))
 
@@ -193,6 +208,57 @@ class SyncFactory(Factory):
             self._roomManager.broadcastRoom(watcher, lambda w: w.setPlaylistIndex(watcher.getName(), index))
         else:
             watcher.setPlaylistIndex(room.getName(), room.getPlaylistIndex())
+
+    def _allowTLSconnections(self, path):
+        try:
+            privKey = open(path+'/privkey.pem', 'rt').read()
+            certif = open(path+'/cert.pem', 'rt').read()
+            chain = open(path+'/chain.pem', 'rt').read()
+
+            self.lastEditCertTime = os.path.getmtime(path+'/cert.pem')
+
+            privKeyPySSL = crypto.load_privatekey(crypto.FILETYPE_PEM, privKey)
+            certifPySSL = crypto.load_certificate(crypto.FILETYPE_PEM, certif)
+            chainPySSL = [crypto.load_certificate(crypto.FILETYPE_PEM, chain)]
+
+            cipherListString = "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:"\
+                               "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:"\
+                               "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+            accCiphers = ssl.AcceptableCiphers.fromOpenSSLCipherString(cipherListString)
+
+            try:
+                contextFactory = ssl.CertificateOptions(privateKey=privKeyPySSL, certificate=certifPySSL,
+                                                        extraCertChain=chainPySSL, acceptableCiphers=accCiphers,
+                                                        raiseMinimumTo=ssl.TLSVersion.TLSv1_2)
+            except AttributeError:
+                contextFactory = ssl.CertificateOptions(privateKey=privKeyPySSL, certificate=certifPySSL,
+                                                        extraCertChain=chainPySSL, acceptableCiphers=accCiphers,
+                                                        method=TLSv1_2_METHOD)
+
+            self.options = contextFactory
+            self.serverAcceptsTLS = True
+            self._TLSattempts = 0
+            print("TLS support is enabled.")
+        except Exception as e:
+            self.options = None
+            self.serverAcceptsTLS = False
+            self.lastEditCertTime = None
+            print("Error while loading the TLS certificates.")
+            print(e)
+            print("TLS support is not enabled.")
+
+    def checkLastEditCertTime(self):
+        try:
+            outTime = os.path.getmtime(self.certPath+'/cert.pem')
+        except:
+            outTime = None
+        return outTime
+
+    def updateTLSContextFactory(self):
+        self._allowTLSconnections(self.certPath)
+        self._TLSattempts += 1
+        if self._TLSattempts < constants.TLS_CERT_ROTATION_MAX_RETRIES:
+            self.serverAcceptsTLS = True
 
 
 class StatsRecorder(object):
@@ -624,3 +690,4 @@ class ConfigurationGetter(object):
         self._argparser.add_argument('--max-chat-message-length', metavar='maxChatMessageLength', type=int, nargs='?', help=getMessage("server-chat-maxchars-argument").format(constants.MAX_CHAT_MESSAGE_LENGTH))
         self._argparser.add_argument('--max-username-length', metavar='maxUsernameLength', type=int, nargs='?', help=getMessage("server-maxusernamelength-argument").format(constants.MAX_USERNAME_LENGTH))
         self._argparser.add_argument('--stats-db-file', metavar='file', type=str, nargs='?', help=getMessage("server-stats-db-file-argument"))
+        self._argparser.add_argument('--tls', metavar='path', type=str, nargs='?', help=getMessage("server-startTLS-argument"))

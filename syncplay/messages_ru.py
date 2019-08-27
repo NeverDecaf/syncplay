@@ -16,7 +16,7 @@ ru = {
     "connection-failed-notification": "Не удалось подключиться к серверу",
     "connected-successful-notification": "Соединение с сервером установлено",
     "retrying-notification": "%s, следующая попытка через %d секунд(ы)...",  # Seconds
-    "handshake-successful-notification": "Connection established with {} ({})", # TODO: Translate
+    "reachout-successful-notification": "Successfully reached {} ({})", # TODO: Translate
 
     "rewind-notification": "Перемотано из-за разницы во времени с {}",  # User
     "fastforward-notification": "Ускорено из-за разницы во времени с {}",  # User
@@ -108,18 +108,18 @@ ru = {
     "mpc-be-version-insufficient-error": "Версия MPC слишком старая, пожалуйста, используйте `mpc-be` >= `{}`",
     "mpv-version-error": "Syncplay не совместим с данной версией mpv. Пожалуйста, используйте другую версию mpv (лучше свежайшую).",
     "player-file-open-error": "Проигрыватель не может открыть файл.",
-    "player-path-error": "Путь к проигрывателю задан неверно. Supported players are: mpv, VLC, MPC-HC, MPC-BE and mplayer2.",  # TODO: Translate last sentence
+    "player-path-error": "Путь к проигрывателю задан неверно. Supported players are: mpv, mpv.net, VLC, MPC-HC, MPC-BE and mplayer2.",  # TODO: Translate last sentence
     "hostname-empty-error": "Имя пользователя не может быть пустым.",
     "empty-error": "{} не может быть пустым.",  # Configuration
     "media-player-error": "Ошибка проигрывателя: \"{}\"",  # Error line
     "unable-import-gui-error": "Невозможно импортировать библиотеки GUI (графического интерфейса). Необходимо установить PySide, иначе графический интерфейс не будет работать.",
-    "unable-import-twisted-error": "Could not import Twisted. Please install Twisted v12.1.0 or later.", #To do: translate
+    "unable-import-twisted-error": "Could not import Twisted. Please install Twisted v16.4.0 or later.", #To do: translate
 
     "arguments-missing-error": "Некоторые необходимые аргументы отсутствуют, обратитесь к --help",
 
     "unable-to-start-client-error": "Невозможно запустить клиент",
 
-    "player-path-config-error": "Путь к проигрывателю установлен неверно. Supported players are: mpv, VLC, MPC-HC, MPC-BE and mplayer2",  # To do: Translate end
+    "player-path-config-error": "Путь к проигрывателю установлен неверно. Supported players are: mpv, mpv.net, VLC, MPC-HC, MPC-BE and mplayer2",  # To do: Translate end
     "no-file-path-config-error": "Файл должен быть указан до включения проигрывателя",
     "no-hostname-config-error": "Имя сервера не может быть пустым",
     "invalid-port-config-error": "Неверный номер порта",
@@ -169,10 +169,12 @@ ru = {
     "file-argument": 'воспроизводимый файл',
     "args-argument": 'параметры проигрывателя; если нужно передать параметры, начинающиеся с - , то сначала пишите \'--\'',
     "clear-gui-data-argument": 'сбрасывает путь и данные о состоянии окна GUI, хранимые как QSettings',
-    "language-argument": 'язык сообщений Syncplay (de/en/ru)',
+    "language-argument": 'язык сообщений Syncplay (de/en/ru/it/es)',
 
     "version-argument": 'выводит номер версии',
     "version-message": "Вы используете Syncplay версии {} ({})",
+
+    "load-playlist-from-file-argument": "loads playlist from text file (one entry per line)", # TODO: Translate
 
     # Client labels
     "config-window-title": "Настройка Syncplay",
@@ -269,7 +271,7 @@ ru = {
     "run-label": "Запустить",
     "storeandrun-label": "Сохранить и запустить",
 
-    "contact-label": "Есть идея, нашли ошибку или хотите оставить отзыв? Пишите на <a href=\"mailto:dev@syncplay.pl\">dev@syncplay.pl</a>, в <a href=\"https://webchat.freenode.net/?channels=#syncplay\">IRC канал #Syncplay</a> на irc.freenode.net или <a href=\"https://github.com/Uriziel/syncplay/issues\">задавайте вопросы через GitHub</a>. Кроме того, заходите на <a href=\"https://syncplay.pl/\">www.syncplay.pl</a> за инорфмацией, помощью и обновлениями! NOTE: Chat messages are not encrypted so do not use Syncplay to send sensitive information.",  # TODO: Translate last sentence
+    "contact-label": "Есть идея, нашли ошибку или хотите оставить отзыв? Пишите на <a href=\"mailto:dev@syncplay.pl\">dev@syncplay.pl</a>, в <a href=\"https://webchat.freenode.net/?channels=#syncplay\">IRC канал #Syncplay</a> на irc.freenode.net или <a href=\"https://github.com/Uriziel/syncplay/issues\">задавайте вопросы через GitHub</a>. Кроме того, заходите на <a href=\"https://syncplay.pl/\">www.syncplay.pl</a> за инорфмацией, помощью и обновлениями! Do not use Syncplay to send sensitive information.",  # TODO: Translate last sentence
 
     "joinroom-label": "Зайти в комнату",
     "joinroom-menu-label": "Зайти в комнату {}",
@@ -299,6 +301,8 @@ ru = {
     "openmedia-menu-label": "&Открыть файл",
     "openstreamurl-menu-label": "Открыть &ссылку",
     "setmediadirectories-menu-label": "&Папки воспроизведения",
+    "loadplaylistfromfile-menu-label": "&Load playlist from file",  # TODO: Translate
+    "saveplaylisttofile-menu-label": "&Save playlist to file",  # TODO: Translate
     "exit-menu-label": "&Выход",
     "advanced-menu-label": "&Дополнительно",
     "window-menu-label": "&Вид",
@@ -307,11 +311,32 @@ ru = {
     "identifyascontroller-menu-label": "&Войти как оператор комнаты",
     "settrusteddomains-menu-label": "Доверенные &сайты",
 
+    # Edit menu - TODO: check - these should match the values of macOS menubar
+    "edit-menu-label": "&Правка",
+    "cut-menu-label": "Bы&резать",
+    "copy-menu-label": "&Скопировать",
+    "paste-menu-label": "&Bставить",
+    "selectall-menu-label": "Bыбра&ть все",
+
     "playback-menu-label": "&Управление",
 
     "help-menu-label": "&Помощь",
     "userguide-menu-label": "&Руководство пользователя",
     "update-menu-label": "Проверить &обновления",
+
+    # startTLS messages - TODO: Translate
+    "startTLS-initiated": "Attempting secure connection",
+    "startTLS-secure-connection-ok": "Secure connection established ({})",
+    "startTLS-server-certificate-invalid": 'Secure connection failed. The server uses an invalid security certificate. This communication could be intercepted by a third party. For further details and troubleshooting see <a href="https://syncplay.pl/trouble">here</a>.',
+    "startTLS-not-supported-client": "This client does not support TLS",
+    "startTLS-not-supported-server": "This server does not support TLS",
+
+    # TLS certificate dialog - TODO: Translate
+    "tls-information-title": "Certificate Details",
+    "tls-dialog-status-label": "<strong>Syncplay is using an encrypted connection to {}.</strong>",
+    "tls-dialog-desc-label": "Encryption with a digital certificate keeps information private as it is sent to or from the<br/>server {}.",
+    "tls-dialog-connection-label": "Information encrypted using Transport Layer Security (TLS), version {} with the cipher<br/>suite: {}.",
+    "tls-dialog-certificate-label": "Certificate issued by {} valid until {}.",
 
     # About dialog - TODO: Translate
     "about-menu-label": "&About Syncplay",
@@ -404,6 +429,8 @@ ru = {
     "reset-tooltip": "Сбрасывает все настройки Syncplay в начальное состояние.",
     "update-server-list-tooltip": "Обновить список публичных серверов от syncplay.pl.",
 
+    "sslconnection-tooltip": "Securely connected to server. Click for certificate details.", # TODO: Translate
+
     "joinroom-tooltip": "Покинуть комнату и зайти в другую, указанную комнату.",
     "seektime-msgbox-label": "Перемотать к определенному моменту времени (указывать в секундах или мин:сек). Используйте +/-, чтобы перемотать вперед/назад относительно настоящего момента.",
     "ready-tooltip": "Показывает, готовы ли Вы к просмотру или нет.",
@@ -418,7 +445,7 @@ ru = {
     "nofile-note": "(ничего)",
 
     # Server messages to client
-    "new-syncplay-available-motd-message": "<NOTICE> Вы используете Syncplay версии {}. Доступна более новая версия на https://syncplay.pl/ . </NOTICE>",  # ClientVersion
+    "new-syncplay-available-motd-message": "Вы используете Syncplay версии {}. Доступна более новая версия на https://syncplay.pl/",  # ClientVersion
 
     # Server notifications
     "welcome-server-notification": "Добро пожаловать на сервер Syncplay версии {0}",  # version
@@ -439,6 +466,7 @@ ru = {
     "server-chat-maxchars-argument": "Maximum number of characters in a chat message (default is {})",  # TODO: Translate
     "server-maxusernamelength-argument": "Maximum number of characters in a username (default is {})", # TODO: Translate
     "server-stats-db-file-argument": "Enable server stats using the SQLite db file provided", # TODO: Translate
+    "server-startTLS-argument": "Enable TLS connections using the certificate files in the path provided", # TODO: Translate
     "server-messed-up-motd-unescaped-placeholders" : "MOTD-сообщение содержит неэкранированные спец.символы. Все знаки $ должны быть продублированы ($$).",
     "server-messed-up-motd-too-long" : "MOTD-сообщение слишком длинное: максимальная длина - {} символ(ов), текущая длина - {} символ(ов).",
 
@@ -467,12 +495,12 @@ ru = {
     "editplaylist-menu-label": "Редактировать список",
 
     "open-containing-folder": "Open folder containing this file",  # TODO: Traslate
-    "addusersfiletoplaylist-menu-label": "Добавить файл {} в список воспроизведения",  # item owner indicator
-    "addusersstreamstoplaylist-menu-label": "Добавить поток {} в список воспроизведения",  # item owner indicator
+    "addyourfiletoplaylist-menu-label": "Добавить файл от вас в список воспроизведения", # TODO: Check
+    "addotherusersfiletoplaylist-menu-label": "Добавить файл {} в список воспроизведения",  # Username # TODO: Check
+    "addyourstreamstoplaylist-menu-label": "Добавить поток от вас в список воспроизведения", # TODO: Check
+    "addotherusersstreamstoplaylist-menu-label": "Добавить поток {} в список воспроизведения",  # Username # TODO: Check
     "openusersstream-menu-label": "Открыть поток от {}",  # [username]'s
     "openusersfile-menu-label": "Открыть файл от {}",  # [username]'s
-    "item-is-yours-indicator": "от вас",  # Goes with addusersfiletoplaylist/addusersstreamstoplaylist
-    "item-is-others-indicator": "{}",  # username - goes with addusersfiletoplaylist/addusersstreamstoplaylist
 
     "playlist-instruction-item-message": "Перетащите сюда файлы, чтобы добавить их в общий список.",
     "sharedplaylistenabled-tooltip": "Оператор комнаты может добавлять файлы в список общего воспроизведения для удобного совместного просмотра. Папки воспроизведения настраиваются во вкладке 'Файл'.",

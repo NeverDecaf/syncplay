@@ -16,7 +16,7 @@ de = {
     "connection-failed-notification": "Verbindung zum Server fehlgeschlagen",
     "connected-successful-notification": "Erfolgreich mit Server verbunden",
     "retrying-notification": "%s, versuche erneut in %d Sekunden...",  # Seconds
-    "handshake-successful-notification": "Connection established with {} ({})", # TODO: Translate
+    "reachout-successful-notification": "Successfully reached {} ({})", # TODO: Translate
 
     "rewind-notification": "Zurückgespult wegen Zeitdifferenz mit {}",  # User
     "fastforward-notification": "Vorgespult wegen Zeitdifferenz mit {}",  # User
@@ -108,18 +108,18 @@ de = {
     "mpc-be-version-insufficient-error": "MPC-Version nicht ausreichend, bitte nutze `mpc-be` >= `{}`",
     "mpv-version-error": "Syncplay ist nicht kompatibel mit dieser Version von mpv.  Bitte benutze eine andere Version (z.B. Git HEAD).",
     "player-file-open-error": "Fehler beim Öffnen der Datei durch den Player",
-    "player-path-error": "Ungültiger Player-Pfad. Supported players are: mpv, VLC, MPC-HC, MPC-BE and mplayer2",  # To do: Translate end
+    "player-path-error": "Ungültiger Player-Pfad. Supported players are: mpv, mpv.net, VLC, MPC-HC, MPC-BE and mplayer2",  # To do: Translate end
     "hostname-empty-error": "Hostname darf nicht leer sein",
     "empty-error": "{} darf nicht leer sein",  # Configuration
     "media-player-error": "Player-Fehler: \"{}\"",  # Error line
     "unable-import-gui-error": "Konnte die GUI-Bibliotheken nicht importieren. PySide muss installiert sein, damit die grafische Oberfläche funktioniert.",
-    "unable-import-twisted-error": "Could not import Twisted. Please install Twisted v12.1.0 or later.", #To do: translate
+    "unable-import-twisted-error": "Could not import Twisted. Please install Twisted v16.4.0 or later.", #To do: translate
 
     "arguments-missing-error": "Notwendige Argumente fehlen, siehe --help",
 
     "unable-to-start-client-error": "Client kann nicht gestartet werden",
 
-    "player-path-config-error": "Player-Pfad ist nicht ordnungsgemäß gesetzt. Supported players are: mpv, VLC, MPC-HC, MPC-BE and mplayer2.",  # To do: Translate end
+    "player-path-config-error": "Player-Pfad ist nicht ordnungsgemäß gesetzt. Supported players are: mpv, mpv.net, VLC, MPC-HC, MPC-BE and mplayer2.",  # To do: Translate end
     "no-file-path-config-error": "Es muss eine Datei ausgewählt werden, bevor der Player gestartet wird.",
     "no-hostname-config-error": "Hostname darf nicht leer sein",
     "invalid-port-config-error": "Port muss gültig sein",
@@ -168,10 +168,12 @@ de = {
     "file-argument": 'Abzuspielende Datei',
     "args-argument": 'Player-Einstellungen; Wenn du Einstellungen, die mit - beginnen, nutzen willst, stelle ein einzelnes \'--\'-Argument davor',
     "clear-gui-data-argument": 'Setzt die Pfad- und GUI-Fenster-Daten die in den QSettings gespeichert sind zurück',
-    "language-argument": 'Sprache für Syncplay-Nachrichten (de/en/ru)',
+    "language-argument": 'Sprache für Syncplay-Nachrichten (de/en/ru/it/es)',
 
     "version-argument": 'gibt die aktuelle Version aus',
     "version-message": "Du verwendest Syncplay v. {} ({})",
+
+    "load-playlist-from-file-argument": "loads playlist from text file (one entry per line)", # TODO: Translate
 
     # Client labels
     "config-window-title": "Syncplay Konfiguration",
@@ -295,6 +297,8 @@ de = {
     "openmedia-menu-label": "&Mediendatei öffnen...",
     "openstreamurl-menu-label": "&Stream URL öffnen",
     "setmediadirectories-menu-label": "Set media &directories",  # TODO: Translate
+    "loadplaylistfromfile-menu-label": "&Load playlist from file",  # TODO: Translate
+    "saveplaylisttofile-menu-label": "&Save playlist to file",  # TODO: Translate
     "exit-menu-label": "&Beenden",
     "advanced-menu-label": "&Erweitert",
     "window-menu-label": "&Fenster",
@@ -304,11 +308,31 @@ de = {
     "settrusteddomains-menu-label": "Set &trusted domains",  # TODO: Translate
     "addtrusteddomain-menu-label": "Add {} as trusted domain",  # Domain # TODO: Translate
 
+    "edit-menu-label": "&Bearbeiten",
+    "cut-menu-label": "Aus&schneiden",
+    "copy-menu-label": "&Kopieren",
+    "paste-menu-label": "&Einsetzen",
+    "selectall-menu-label": "&Alles auswälhen",
+
     "playback-menu-label": "&Wiedergabe",
 
     "help-menu-label": "&Hilfe",
     "userguide-menu-label": "&Benutzerhandbuch öffnen",
     "update-menu-label": "auf &Aktualisierung prüfen",
+
+    # startTLS messages - TODO: Translate
+    "startTLS-initiated": "Attempting secure connection",
+    "startTLS-secure-connection-ok": "Secure connection established ({})",
+    "startTLS-server-certificate-invalid": 'Secure connection failed. The server uses an invalid security certificate. This communication could be intercepted by a third party. For further details and troubleshooting see <a href="https://syncplay.pl/trouble">here</a>.',
+    "startTLS-not-supported-client": "This client does not support TLS",
+    "startTLS-not-supported-server": "This server does not support TLS",
+
+    # TLS certificate dialog - TODO: Translate
+    "tls-information-title": "Certificate Details",
+    "tls-dialog-status-label": "<strong>Syncplay is using an encrypted connection to {}.</strong>",
+    "tls-dialog-desc-label": "Encryption with a digital certificate keeps information private as it is sent to or from the<br/>server {}.",
+    "tls-dialog-connection-label": "Information encrypted using Transport Layer Security (TLS), version {} with the cipher<br/>suite: {}.",
+    "tls-dialog-certificate-label": "Certificate issued by {} valid until {}.",
 
     # About dialog - TODO: Translate
     "about-menu-label": "&About Syncplay",
@@ -403,6 +427,8 @@ de = {
     "reset-tooltip": "Alle Einstellungen auf Standardwerte zurücksetzen.",
     "update-server-list-tooltip": "Mit syncplay.pl verbinden um die Liste öffentlicher Server zu aktualisieren.",
 
+    "sslconnection-tooltip": "Securely connected to server. Click for certificate details.",  # TODO: Translate
+
     "joinroom-tooltip": "Den aktuellen Raum verlassen und stattdessen den angegebenen betreten.",
     "seektime-msgbox-label": "Springe zur angegebenen Zeit (in Sekunden oder min:sek).  Verwende +/- zum relativen Springen.",
     "ready-tooltip": "Zeigt an, ob du bereit zum anschauen bist",
@@ -417,7 +443,7 @@ de = {
     "nofile-note": "(keine Datei wird abgespielt)",
 
     # Server messages to client
-    "new-syncplay-available-motd-message": "<NOTICE> Du nutzt Syncplay Version {}, aber es gibt eine neuere Version auf https://syncplay.pl</NOTICE>",  # ClientVersion
+    "new-syncplay-available-motd-message": "Du nutzt Syncplay Version {}, aber es gibt eine neuere Version auf https://syncplay.pl",  # ClientVersion
 
     # Server notifications
     "welcome-server-notification": "Willkommen zum Syncplay-Server, v. {0}",  # version
@@ -438,6 +464,7 @@ de = {
     "server-chat-maxchars-argument": "Maximum number of characters in a chat message (default is {})",  # TODO: Translate
     "server-maxusernamelength-argument": "Maximum number of characters in a username (default is {})", # TODO: Translate
     "server-stats-db-file-argument": "Enable server stats using the SQLite db file provided", # TODO: Translate
+    "server-startTLS-argument": "Enable TLS connections using the certificate files in the path provided", # TODO: Translate
     "server-messed-up-motd-unescaped-placeholders": "Die Nachricht des Tages hat unmaskierte Platzhalter. Alle $-Zeichen sollten verdoppelt werden ($$).",
     "server-messed-up-motd-too-long": "Die Nachricht des Tages ist zu lang - Maximal {} Zeichen, aktuell {}.",
 
@@ -467,12 +494,12 @@ de = {
     "editplaylist-menu-label": "Edit playlist",
 
     "open-containing-folder": "Open folder containing this file",
-    "addusersfiletoplaylist-menu-label": "Add {} file to playlist",  # item owner indicator
-    "addusersstreamstoplaylist-menu-label": "Add {} stream to playlist",  # item owner indicator
-    "openusersstream-menu-label": "Open {} stream",  # [username]'s
-    "openusersfile-menu-label": "Open {} file",  # [username]'s
-    "item-is-yours-indicator": "your",  # Goes with addusersfiletoplaylist/addusersstreamstoplaylist
-    "item-is-others-indicator": "{}'s",  # username - goes with addusersfiletoplaylist/addusersstreamstoplaylist
+    "addyourfiletoplaylist-menu-label": "Add your file to playlist",
+    "addotherusersfiletoplaylist-menu-label": "Add {}'s file to playlist",  # [Username]
+    "addyourstreamstoplaylist-menu-label": "Add your stream to playlist",
+    "addotherusersstreamstoplaylist-menu-label": "Add {}' stream to playlist",  # [Username]
+    "openusersstream-menu-label": "Open {}'s stream",  # [username]'s
+    "openusersfile-menu-label": "Open {}'s file",  # [username]'s
 
     "playlist-instruction-item-message": "Drag file here to add it to the shared playlist.",
     "sharedplaylistenabled-tooltip": "Room operators can add files to a synced playlist to make it easy for everyone to watching the same thing. Configure media directories under 'Misc'.",
